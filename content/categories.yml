@@ -38,3 +38,43 @@
   homeMode: first
   homeGroup: software
   homeOrder: 30
+- id: games
+  label: 游戏
+  navLabel: 游戏
+  homeLabel: 游戏
+  order: 60
+  homeMode: hidden
+  homeGroup: games
+  homeOrder: 60
+  sections:
+    - { id: trainers, label: 游戏修改器 / Trainer, order: 10 }
+    - { id: game-resources, label: 游戏资源, order: 20 }
+    - { id: mods-tools, label: 游戏 MOD / 工具, order: 30 }
+    - { id: security-research, label: 游戏安全研究, order: 40 }
+- id: video
+  label: 视频
+  navLabel: 视频
+  homeLabel: 视频
+  order: 70
+  homeMode: hidden
+  homeGroup: video
+  homeOrder: 70
+  sections:
+    - { id: cli-open-source, label: 命令行 / 开源工具, order: 10 }
+    - { id: desktop-clients, label: 桌面客户端, order: 20 }
+    - { id: online-downloaders, label: 在线下载器, order: 30 }
+    - { id: browser-extensions, label: 浏览器扩展, order: 40 }
+    - { id: drm-tools, label: DRM / 流媒体工具, order: 50 }
+- id: media
+  label: 影视
+  navLabel: 影视
+  homeLabel: 影视
+  order: 80
+  homeMode: hidden
+  homeGroup: media
+  homeOrder: 80
+  sections:
+    - { id: domestic-film-tv, label: 国内影视, order: 10 }
+    - { id: international-film-tv, label: 国际影视, order: 20 }
+    - { id: media-centers, label: 媒体中心 / 客户端, order: 30 }
+    - { id: private-trackers, label: PT / BT, order: 40 }

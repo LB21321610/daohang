@@ -6,6 +6,31 @@ import { describe, expect, it } from "vitest";
 import { compileCatalog } from "../../scripts/content-lib.mts";
 import { discoverSiteDocuments } from "../../scripts/content-files.mts";
 
+const expectedCatalogIds = {
+  games: [
+    "fling-trainer", "gamecopyworld", "megagames", "cheat-happens", "wemod", "trainer-dev",
+    "mrantifun", "game-trainer", "fitgirl-repacks", "steamunlocked", "steamrip", "gog-games",
+    "ocean-of-games", "igg-games", "kaoskrew", "dodi-repacks", "elamigos", "gload", "online-fix",
+    "cs-rin-ru", "nexus-mods", "moddb", "gamebanana", "fling-mods", "3dmgame", "ali213",
+    "guided-hacking", "acidmods-gamehacking", "cheat-engine", "unknowncheats",
+  ],
+  video: [
+    "yt-dlp", "you-get", "lux", "bbdown", "bilix", "n-m3u8dl-re", "tiktok-downloader", "aria2",
+    "ffmpeg", "streamlink-github", "streamlink", "bento4", "shaka-packager", "4k-video-downloader",
+    "jdownloader-2", "motrix", "free-download-manager", "internet-download-manager", "xdm",
+    "neat-download-manager", "cobalt", "y2mate", "savefrom", "ssyoutube", "video-downloadhelper",
+    "hls-downloader", "stream-recorder", "widevine-l3-decryptor", "freegrabapp", "flixgrab",
+    "streamfab", "cleverget", "noteburner", "anystream",
+  ],
+  media: [
+    "ddrk", "zxzj", "nunuyy", "hao6v", "dy2018", "ygdy8", "renren-yingshi", "bt-tiantang",
+    "fmovies", "123movies", "putlocker", "solarmovie", "soap2day", "yesmovies", "cmovies",
+    "gomovies", "streamlord", "moviesjoy", "lookmovie", "flixhq", "kissasian", "9anime",
+    "zoro-aniwatch", "gogoanime", "wcostream", "popcorn-time", "stremio", "kodi", "haibao",
+    "mteam", "hdsky", "audiences", "pterclub", "hdbits", "btn", "ptp", "iptorrents",
+  ],
+} as const;
+
 const categories = `
 - id: common
   label: 常用
@@ -357,10 +382,14 @@ describe("compileCatalog", () => {
     const softwareSites = catalog.sites.filter((site) =>
       ["windows", "mac", "cross-platform"].includes(site.category),
     );
+    const legacySites = catalog.sites.filter((site) =>
+      !["games", "video", "media"].includes(site.category),
+    );
 
-    expect(catalog.sites).toHaveLength(39);
-    expect(catalog.sites.every((site) => site.linkStatus === "unchecked")).toBe(true);
-    expect(new Set(catalog.sites.map((site) => `${site.reviewStatus}/${site.linkStatus}`))).toEqual(
+    expect(catalog.sites).toHaveLength(140);
+    expect(legacySites).toHaveLength(39);
+    expect(legacySites.every((site) => site.linkStatus === "unchecked")).toBe(true);
+    expect(new Set(legacySites.map((site) => `${site.reviewStatus}/${site.linkStatus}`))).toEqual(
       new Set(["verified/unchecked", "unverified/unchecked"]),
     );
     expect(catalog.sites.filter((site) => site.category === "windows")).toHaveLength(14);
@@ -403,5 +432,43 @@ describe("compileCatalog", () => {
         "yasir252.com",
       ].sort(),
     );
+  });
+
+  it("publishes the complete games, video, and media catalog", async () => {
+    const contentDirectory = path.join(process.cwd(), "content");
+    const categoriesYaml = await readFile(path.join(contentDirectory, "categories.yml"), "utf8");
+    const documents = await discoverSiteDocuments(path.join(contentDirectory, "sites"), process.cwd());
+    const catalog = compileCatalog(categoriesYaml, documents);
+
+    for (const [category, expectedIds] of Object.entries(expectedCatalogIds)) {
+      const sites = catalog.sites.filter((site) => site.category === category);
+      expect(sites.map((site) => site.id).sort()).toEqual([...expectedIds].sort());
+      expect(sites.every((site) => site.reviewStatus === "unverified")).toBe(true);
+      expect(sites.every((site) => site.source.kind === "manual")).toBe(true);
+      expect(sites.every((site) => ["unchecked", "unavailable"].includes(site.linkStatus))).toBe(true);
+    }
+
+    expect(catalog.sites.filter((site) => site.category === "games")).toHaveLength(30);
+    expect(catalog.sites.filter((site) => site.category === "video")).toHaveLength(34);
+    expect(catalog.sites.filter((site) => site.category === "media")).toHaveLength(37);
+    expect(catalog.sites.filter((site) => site.linkStatus === "unavailable").map((site) => site.id).sort()).toEqual(
+      [
+        "123movies", "bt-tiantang", "btn", "gomovies", "haibao", "hls-downloader", "ptp",
+        "putlocker", "renren-yingshi", "soap2day", "stream-recorder", "xdm",
+      ].sort(),
+    );
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "trainers")).toHaveLength(8);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "game-resources")).toHaveLength(12);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "mods-tools")).toHaveLength(6);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "security-research")).toHaveLength(4);
+    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "cli-open-source")).toHaveLength(13);
+    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "desktop-clients")).toHaveLength(7);
+    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "online-downloaders")).toHaveLength(4);
+    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "browser-extensions")).toHaveLength(3);
+    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "drm-tools")).toHaveLength(7);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "domestic-film-tv")).toHaveLength(8);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "international-film-tv")).toHaveLength(17);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "media-centers")).toHaveLength(3);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "private-trackers")).toHaveLength(9);
   });
 });

@@ -27,15 +27,15 @@
 > “这个网站我昨天还用过，到底放哪了？”<br>
 > —— 每个打开了 37 个标签页的人 😵‍💫
 
-这是一个静态、轻量、可配置的个人导航站。它把常用网站、AI 工具以及 Windows、Mac、综合软件资源整理到同一个页面里，让浏览器收藏夹暂时停止自由生长。🌱
+这是一个静态、轻量、可配置的个人导航站。它把常用网站、AI 工具、软件资源，以及游戏、视频与影视目录整理到同一个页面里，让浏览器收藏夹暂时停止自由生长。🌱
 
 ### ✨ 它会什么
 
 - 🔎 **全局搜索**：按名称、描述、分类或标签快速找站点
-- 🗂️ **清晰分类**：常用、AI、Windows、Mac、综合，各回各家
+- 🗂️ **清晰分类**：常用、AI、软件、游戏、视频、影视，各回各家
 - ⭐ **本地收藏**：收藏保存在浏览器里，刷新也不会失忆
 - 🧩 **YAML 配置**：新增网站不用进组件里考古
-- ⚠️ **风险提醒**：软件资源始终显示警告，高风险链接首次打开前需要确认
+- ⚠️ **风险提醒**：高风险资源始终显示警告，首次打开链接前需要确认
 - 📱 **响应式布局**：桌面端安静舒展，移动端也不会横着跑
 - 🚀 **自动部署**：推送到 `main` 后由 GitHub Actions 发布到 Pages
 
@@ -66,7 +66,10 @@ content/
     ├── ai.yml
     ├── windows.yml
     ├── mac.yml
-    └── cross-platform.yml
+    ├── cross-platform.yml
+    ├── games.yml
+    ├── video.yml
+    └── media.yml
 ```
 
 修改后运行：
@@ -75,7 +78,9 @@ content/
 npm run content:build
 ```
 
-生成器会检查 HTTPS、重复 ID、重复网址、分类引用和字段格式，然后生成前端使用的数据。写错了就立刻报错，不让坏配置悄悄混进页面。🕵️
+生成器会检查 HTTPS、重复 ID、重复网址、分类与分组引用、字段格式，然后生成前端使用的数据。写错了就立刻报错，不让坏配置悄悄混进页面。🕵️
+
+有些条目会因站点关闭、域名变更或清单原链接不可靠而暂无稳定网址。它们仍保留在目录中便于识别和搜索，但会显示为不可点击的“暂无稳定链接”，不会用未确认的替代域名凑数。
 
 ### 🥕 Carrot 数据导入
 
@@ -98,12 +103,12 @@ npm run content:import-carrot
 > “I used that website yesterday. Where did it go?”<br>
 > — Everyone with 37 tabs open 😵‍💫
 
-Personal Navigation is a lightweight, static, and configurable directory for everyday websites, AI tools, and Windows, Mac, and cross-platform software resources. It gives your bookmarks a home before they evolve into their own ecosystem. 🌱
+Personal Navigation is a lightweight, static, and configurable directory for everyday websites, AI tools, software resources, and curated game, video, and film/TV catalogs. It gives your bookmarks a home before they evolve into their own ecosystem. 🌱
 
 ### ✨ What it does
 
 - 🔎 **Global search** across names, descriptions, categories, and tags
-- 🗂️ **Clear categories** for everyday sites, AI, Windows, Mac, and more
+- 🗂️ **Clear categories** for everyday sites, AI, software, games, video tools, and film/TV resources
 - ⭐ **Local favorites** that survive page reloads in the same browser
 - 🧩 **YAML-powered content** so adding a site does not require component archaeology
 - ⚠️ **Risk-aware links** with permanent warnings and first-visit confirmation for high-risk entries
@@ -133,7 +138,9 @@ Categories and sites live in `content/categories.yml` and `content/sites/*.yml`.
 npm run content:build
 ```
 
-The generator validates HTTPS URLs, duplicate IDs and URLs, category references, and field formats before producing the data consumed by the frontend. Bad configuration gets stopped at the door. 🚧
+The generator validates HTTPS URLs, duplicate IDs and URLs, category and section references, and field formats before producing the data consumed by the frontend. Bad configuration gets stopped at the door. 🚧
+
+Some entries have no stable URL because a site closed, its domain changes frequently, or the original catalog link was unreliable. They remain searchable for reference, but appear as disabled “No stable link” rows instead of pointing visitors at an unverified replacement domain.
 
 ### 🥕 Importing Carrot data
 
