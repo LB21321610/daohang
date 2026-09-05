@@ -15,7 +15,7 @@
     "test": "npm run content:build && vitest run",
     "test:e2e": "npm run build && npm run test:sites && playwright test",
     "test:sites": "node --test tests/sites-worker.test.mjs",
-    "check": "npm run audit:high && npm run typecheck && npm run lint && npm run test && npm run build && npm run test:sites && playwright test"
+    "check": "npm run audit:high && npm run content:build && npm run typecheck && npm run lint && npm run test && npm run build && npm run test:sites && playwright test"
   },
   "dependencies": {
     "@phosphor-icons/react": "2.1.10",
