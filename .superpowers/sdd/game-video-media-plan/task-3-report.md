@@ -44,3 +44,21 @@ Result: exit 0; 1 file passed and 13 tests passed.
 - All new rows are `unverified` and manual-source; linked rows are HTTPS plus `unchecked`; unavailable rows omit `url`.
 - Unavailable IDs are exactly `123movies`, `bt-tiantang`, `btn`, `gomovies`, `haibao`, `hls-downloader`, `ptp`, `putlocker`, `renren-yingshi`, `soap2day`, `stream-recorder`, and `xdm`.
 - `git diff --check` reported no whitespace errors before commit.
+
+## Review fix round 1
+
+The complete-catalog contract now uses a hand-authored mapping for all 101 new IDs. Each entry locks its section, normalized URL or absent URL, exact link status, risk level, and required aliases. The same test also locks the complete published structure of the `games`, `video`, and `media` categories, including labels, orders, hidden-home mode, home metadata, and ordered section labels.
+
+### Observable RED
+
+- Added the new mapping assertion with `fling-trainer` deliberately expecting `riskLevel: standard`.
+- `npx vitest run tests/content/content.test.ts` -> exit 1; 1 failed and 12 passed.
+- Failure showed the intended mutation was caught: expected `standard`, received `high`.
+
+### Corrected GREEN
+
+- Corrected `fling-trainer` to `high` and completed the remaining 100 hand-authored entries.
+- `npx vitest run tests/content/content.test.ts` -> exit 0; 1 file passed and 13 tests passed.
+- `npm test` -> exit 0; content generation reported 140 sites across 8 categories, with 6 files and 34 tests passed.
+- `npm run typecheck` -> exit 0.
+- `npm run lint` -> exit 0.

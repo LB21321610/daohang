@@ -6,30 +6,157 @@ import { describe, expect, it } from "vitest";
 import { compileCatalog } from "../../scripts/content-lib.mts";
 import { discoverSiteDocuments } from "../../scripts/content-files.mts";
 
-const expectedCatalogIds = {
-  games: [
-    "fling-trainer", "gamecopyworld", "megagames", "cheat-happens", "wemod", "trainer-dev",
-    "mrantifun", "game-trainer", "fitgirl-repacks", "steamunlocked", "steamrip", "gog-games",
-    "ocean-of-games", "igg-games", "kaoskrew", "dodi-repacks", "elamigos", "gload", "online-fix",
-    "cs-rin-ru", "nexus-mods", "moddb", "gamebanana", "fling-mods", "3dmgame", "ali213",
-    "guided-hacking", "acidmods-gamehacking", "cheat-engine", "unknowncheats",
-  ],
-  video: [
-    "yt-dlp", "you-get", "lux", "bbdown", "bilix", "n-m3u8dl-re", "tiktok-downloader", "aria2",
-    "ffmpeg", "streamlink-github", "streamlink", "bento4", "shaka-packager", "4k-video-downloader",
-    "jdownloader-2", "motrix", "free-download-manager", "internet-download-manager", "xdm",
-    "neat-download-manager", "cobalt", "y2mate", "savefrom", "ssyoutube", "video-downloadhelper",
-    "hls-downloader", "stream-recorder", "widevine-l3-decryptor", "freegrabapp", "flixgrab",
-    "streamfab", "cleverget", "noteburner", "anystream",
-  ],
-  media: [
-    "ddrk", "zxzj", "nunuyy", "hao6v", "dy2018", "ygdy8", "renren-yingshi", "bt-tiantang",
-    "fmovies", "123movies", "putlocker", "solarmovie", "soap2day", "yesmovies", "cmovies",
-    "gomovies", "streamlord", "moviesjoy", "lookmovie", "flixhq", "kissasian", "9anime",
-    "zoro-aniwatch", "gogoanime", "wcostream", "popcorn-time", "stremio", "kodi", "haibao",
-    "mteam", "hdsky", "audiences", "pterclub", "hdbits", "btn", "ptp", "iptorrents",
-  ],
-} as const;
+type ExpectedEntry = readonly [
+  section: string,
+  url: string | null,
+  linkStatus: "unchecked" | "unavailable",
+  riskLevel: "standard" | "external" | "high",
+  requiredAliases: readonly string[],
+];
+
+const expectedCatalogEntries = {
+  games: {
+    "fling-trainer": ["trainers", "https://flingtrainer.com/", "unchecked", "high", ["风灵月影"]],
+    gamecopyworld: ["trainers", "https://gamecopyworld.com/", "unchecked", "high", []],
+    megagames: ["trainers", "https://megagames.com/", "unchecked", "high", []],
+    "cheat-happens": ["trainers", "https://cheathappens.com/", "unchecked", "high", []],
+    wemod: ["trainers", "https://wemod.com/", "unchecked", "high", ["WeMod 客户端"]],
+    "trainer-dev": ["trainers", "https://trainer.dev/", "unchecked", "high", []],
+    mrantifun: ["trainers", "https://mrantifun.net/", "unchecked", "high", []],
+    "game-trainer": ["trainers", "https://game-trainer.com/", "unchecked", "high", []],
+    "fitgirl-repacks": ["game-resources", "https://fitgirl-repacks.site/", "unchecked", "high", []],
+    steamunlocked: ["game-resources", "https://steamunlocked.net/", "unchecked", "high", []],
+    steamrip: ["game-resources", "https://steamrip.com/", "unchecked", "high", []],
+    "gog-games": ["game-resources", "https://gog-games.to/", "unchecked", "high", []],
+    "ocean-of-games": ["game-resources", "https://ocean-of-games.com/", "unchecked", "high", []],
+    "igg-games": ["game-resources", "https://igg-games.com/", "unchecked", "high", []],
+    kaoskrew: ["game-resources", "https://kaoskrew.org/", "unchecked", "high", []],
+    "dodi-repacks": ["game-resources", "https://dodi-repacks.site/", "unchecked", "high", []],
+    elamigos: ["game-resources", "https://elamigos.site/", "unchecked", "high", []],
+    gload: ["game-resources", "https://gload.cc/", "unchecked", "high", []],
+    "online-fix": ["game-resources", "https://online-fix.me/", "unchecked", "high", []],
+    "cs-rin-ru": ["game-resources", "https://cs.rin.ru/", "unchecked", "high", []],
+    "nexus-mods": ["mods-tools", "https://nexusmods.com/", "unchecked", "standard", []],
+    moddb: ["mods-tools", "https://moddb.com/", "unchecked", "standard", []],
+    gamebanana: ["mods-tools", "https://gamebanana.com/", "unchecked", "standard", []],
+    "fling-mods": ["mods-tools", "https://flingtrainer.com/mods", "unchecked", "high", []],
+    "3dmgame": ["mods-tools", "https://3dmgame.com/", "unchecked", "high", ["3DM"]],
+    ali213: ["mods-tools", "https://ali213.net/", "unchecked", "high", ["Ali213"]],
+    "guided-hacking": ["security-research", "https://guidedhacking.com/", "unchecked", "high", []],
+    "acidmods-gamehacking": ["security-research", "https://gamehacking.acidmods.com/", "unchecked", "high", []],
+    "cheat-engine": ["security-research", "https://cheatengine.org/", "unchecked", "high", []],
+    unknowncheats: ["security-research", "https://unknowncheats.me/", "unchecked", "high", []],
+  },
+  video: {
+    "yt-dlp": ["cli-open-source", "https://github.com/yt-dlp/yt-dlp", "unchecked", "standard", []],
+    "you-get": ["cli-open-source", "https://github.com/soimort/you-get", "unchecked", "standard", []],
+    lux: ["cli-open-source", "https://github.com/iawia002/lux", "unchecked", "standard", ["annie"]],
+    bbdown: ["cli-open-source", "https://github.com/nilaoda/BBDown", "unchecked", "standard", []],
+    bilix: ["cli-open-source", "https://github.com/HFrost0/bilix", "unchecked", "standard", []],
+    "n-m3u8dl-re": ["cli-open-source", "https://github.com/nilaoda/N_m3u8DL-RE", "unchecked", "standard", []],
+    "tiktok-downloader": ["cli-open-source", "https://github.com/JoeanAmier/TikTok-Downloader", "unchecked", "standard", []],
+    aria2: ["cli-open-source", "https://github.com/aria2/aria2", "unchecked", "standard", []],
+    ffmpeg: ["cli-open-source", "https://ffmpeg.org/", "unchecked", "standard", []],
+    "streamlink-github": ["cli-open-source", "https://github.com/streamlink/streamlink", "unchecked", "standard", []],
+    streamlink: ["cli-open-source", "https://streamlink.github.io/", "unchecked", "standard", []],
+    bento4: ["cli-open-source", "https://www.bento4.com/", "unchecked", "standard", ["mp4decrypter"]],
+    "shaka-packager": ["cli-open-source", "https://github.com/shaka-project/shaka-packager", "unchecked", "standard", []],
+    "4k-video-downloader": ["desktop-clients", "https://www.4kdownload.com/", "unchecked", "standard", []],
+    "jdownloader-2": ["desktop-clients", "https://jdownloader.org/", "unchecked", "standard", []],
+    motrix: ["desktop-clients", "https://motrix.app/", "unchecked", "standard", []],
+    "free-download-manager": ["desktop-clients", "https://www.freedownloadmanager.org/", "unchecked", "standard", ["FDM"]],
+    "internet-download-manager": ["desktop-clients", "https://www.internetdownloadmanager.com/", "unchecked", "standard", ["IDM"]],
+    xdm: ["desktop-clients", null, "unavailable", "standard", []],
+    "neat-download-manager": ["desktop-clients", "https://www.neatdownloadmanager.com/", "unchecked", "standard", []],
+    cobalt: ["online-downloaders", "https://cobalt.tools/", "unchecked", "external", []],
+    y2mate: ["online-downloaders", "https://www.y2mate.com/", "unchecked", "external", []],
+    savefrom: ["online-downloaders", "https://savefrom.net/", "unchecked", "external", []],
+    ssyoutube: ["online-downloaders", "https://ssyoutube.com/", "unchecked", "external", []],
+    "video-downloadhelper": ["browser-extensions", "https://www.downloadhelper.net/", "unchecked", "standard", []],
+    "hls-downloader": ["browser-extensions", null, "unavailable", "standard", []],
+    "stream-recorder": ["browser-extensions", null, "unavailable", "standard", []],
+    "widevine-l3-decryptor": ["drm-tools", "https://github.com/nicholasgasior/widevine-l3-decryptor", "unchecked", "high", ["WidevineDecryptor"]],
+    freegrabapp: ["drm-tools", "https://freegrabapp.com/", "unchecked", "high", []],
+    flixgrab: ["drm-tools", "https://www.flixgrab.com/", "unchecked", "high", []],
+    streamfab: ["drm-tools", "https://www.dvdfab.cn/streamfab.htm", "unchecked", "high", []],
+    cleverget: ["drm-tools", "https://www.cleverget.com/", "unchecked", "high", []],
+    noteburner: ["drm-tools", "https://www.noteburner.com/", "unchecked", "high", []],
+    anystream: ["drm-tools", "https://www.redfox.bz/anystream.html", "unchecked", "high", []],
+  },
+  media: {
+    ddrk: ["domestic-film-tv", "https://ddrk.me/", "unchecked", "high", []],
+    zxzj: ["domestic-film-tv", "https://www.zxzj.me/", "unchecked", "high", []],
+    nunuyy: ["domestic-film-tv", "https://nunuyy.com/", "unchecked", "high", []],
+    hao6v: ["domestic-film-tv", "https://www.hao6v.com/", "unchecked", "high", []],
+    dy2018: ["domestic-film-tv", "https://www.dy2018.net/", "unchecked", "high", []],
+    ygdy8: ["domestic-film-tv", "https://www.ygdy8.com/", "unchecked", "high", []],
+    "renren-yingshi": ["domestic-film-tv", null, "unavailable", "high", []],
+    "bt-tiantang": ["domestic-film-tv", null, "unavailable", "high", []],
+    fmovies: ["international-film-tv", "https://fmovies.to/", "unchecked", "high", []],
+    "123movies": ["international-film-tv", null, "unavailable", "high", []],
+    putlocker: ["international-film-tv", null, "unavailable", "high", []],
+    solarmovie: ["international-film-tv", "https://solarmovie.pe/", "unchecked", "high", []],
+    soap2day: ["international-film-tv", null, "unavailable", "high", []],
+    yesmovies: ["international-film-tv", "https://yesmovies.ag/", "unchecked", "high", []],
+    cmovies: ["international-film-tv", "https://cmovieshd.com/", "unchecked", "high", []],
+    gomovies: ["international-film-tv", null, "unavailable", "high", []],
+    streamlord: ["international-film-tv", "https://streamlord.com/", "unchecked", "high", []],
+    moviesjoy: ["international-film-tv", "https://moviesjoy.to/", "unchecked", "high", []],
+    lookmovie: ["international-film-tv", "https://lookmovie2.to/", "unchecked", "high", []],
+    flixhq: ["international-film-tv", "https://flixhq.to/", "unchecked", "high", []],
+    kissasian: ["international-film-tv", "https://kissasian.li/", "unchecked", "high", []],
+    "9anime": ["international-film-tv", "https://9anime.to/", "unchecked", "high", []],
+    "zoro-aniwatch": ["international-film-tv", "https://aniwatch.to/", "unchecked", "high", ["Zoro.to", "Aniwatch"]],
+    gogoanime: ["international-film-tv", "https://gogoanime.gg/", "unchecked", "high", []],
+    wcostream: ["international-film-tv", "https://wcostream.tv/", "unchecked", "high", []],
+    "popcorn-time": ["media-centers", "https://popcorntime.app/", "unchecked", "high", []],
+    stremio: ["media-centers", "https://www.stremio.com/", "unchecked", "standard", []],
+    kodi: ["media-centers", "https://kodi.tv/", "unchecked", "standard", []],
+    haibao: ["private-trackers", null, "unavailable", "high", []],
+    mteam: ["private-trackers", "https://kp.m-team.cc/", "unchecked", "high", ["馒头"]],
+    hdsky: ["private-trackers", "https://hdsky.me/", "unchecked", "high", ["红豆饭"]],
+    audiences: ["private-trackers", "https://audiences.me/", "unchecked", "high", ["观众"]],
+    pterclub: ["private-trackers", "https://pterclub.com/", "unchecked", "high", []],
+    hdbits: ["private-trackers", "https://hdbits.org/", "unchecked", "high", []],
+    btn: ["private-trackers", null, "unavailable", "high", []],
+    ptp: ["private-trackers", null, "unavailable", "high", []],
+    iptorrents: ["private-trackers", "https://iptorrents.com/", "unchecked", "high", []],
+  },
+} as const satisfies Record<string, Record<string, ExpectedEntry>>;
+
+const expectedNewCategories = [
+  {
+    id: "games", label: "游戏", navLabel: "游戏", homeLabel: "游戏", order: 60,
+    homeMode: "hidden", homeGroup: "games", homeOrder: 60,
+    sections: [
+      { id: "trainers", label: "游戏修改器 / Trainer", order: 10 },
+      { id: "game-resources", label: "游戏资源", order: 20 },
+      { id: "mods-tools", label: "游戏 MOD / 工具", order: 30 },
+      { id: "security-research", label: "游戏安全研究", order: 40 },
+    ],
+  },
+  {
+    id: "video", label: "视频", navLabel: "视频", homeLabel: "视频", order: 70,
+    homeMode: "hidden", homeGroup: "video", homeOrder: 70,
+    sections: [
+      { id: "cli-open-source", label: "命令行 / 开源工具", order: 10 },
+      { id: "desktop-clients", label: "桌面客户端", order: 20 },
+      { id: "online-downloaders", label: "在线下载器", order: 30 },
+      { id: "browser-extensions", label: "浏览器扩展", order: 40 },
+      { id: "drm-tools", label: "DRM / 流媒体工具", order: 50 },
+    ],
+  },
+  {
+    id: "media", label: "影视", navLabel: "影视", homeLabel: "影视", order: 80,
+    homeMode: "hidden", homeGroup: "media", homeOrder: 80,
+    sections: [
+      { id: "domestic-film-tv", label: "国内影视", order: 10 },
+      { id: "international-film-tv", label: "国际影视", order: 20 },
+      { id: "media-centers", label: "媒体中心 / 客户端", order: 30 },
+      { id: "private-trackers", label: "PT / BT", order: 40 },
+    ],
+  },
+] as const;
 
 const categories = `
 - id: common
@@ -440,12 +567,29 @@ describe("compileCatalog", () => {
     const documents = await discoverSiteDocuments(path.join(contentDirectory, "sites"), process.cwd());
     const catalog = compileCatalog(categoriesYaml, documents);
 
-    for (const [category, expectedIds] of Object.entries(expectedCatalogIds)) {
+    expect(catalog.categories.filter((category) => ["games", "video", "media"].includes(category.id))).toEqual(
+      expectedNewCategories,
+    );
+
+    for (const [category, expectedEntries] of Object.entries(expectedCatalogEntries)) {
       const sites = catalog.sites.filter((site) => site.category === category);
-      expect(sites.map((site) => site.id).sort()).toEqual([...expectedIds].sort());
+      expect(sites.map((site) => site.id).sort()).toEqual(Object.keys(expectedEntries).sort());
       expect(sites.every((site) => site.reviewStatus === "unverified")).toBe(true);
       expect(sites.every((site) => site.source.kind === "manual")).toBe(true);
       expect(sites.every((site) => ["unchecked", "unavailable"].includes(site.linkStatus))).toBe(true);
+
+      for (const [id, [section, url, linkStatus, riskLevel, requiredAliases]] of Object.entries(expectedEntries)) {
+        const site = sites.find((candidate) => candidate.id === id);
+        if (!site) throw new Error(`missing expected catalog entry ${id}`);
+
+        expect({
+          section: site.section,
+          url: "url" in site ? site.url : null,
+          linkStatus: site.linkStatus,
+          riskLevel: site.riskLevel,
+        }).toEqual({ section, url, linkStatus, riskLevel });
+        expect(site.aliases ?? []).toEqual(expect.arrayContaining([...requiredAliases]));
+      }
     }
 
     expect(catalog.sites.filter((site) => site.category === "games")).toHaveLength(30);
