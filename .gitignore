@@ -6,5 +6,6 @@ artifacts/
 src/generated/*.json
 content/imports/carrot.generated.yml
 .superpowers/
+.worktrees/
 .DS_Store
 AGENTS.md
