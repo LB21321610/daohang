@@ -10,7 +10,7 @@ Status: DONE_WITH_CONCERNS
 - Restricted review status to `verified | unverified`.
 - Added shared deterministic discovery for direct, regular, visible `.yml` files using English ordering; both the build and catalog test use it.
 - Preserved YAML document/site ordering, duplicate site ID validation, and normalized URL duplicate validation.
-- Added `linkStatus` to all 39 existing site entries (`verified` for current verified entries, `unchecked` for current unverified links).
+- Added `linkStatus: unchecked` to all 39 existing site entries because no independent link-check evidence exists; their original `reviewStatus` values remain unchanged.
 
 ## TDD Evidence
 
@@ -84,3 +84,62 @@ Both exited 0 with no findings.
 3. Existing fixtures in `tests/app/App.test.tsx` and `tests/domain/search.test.ts`: linked sites do not yet include `linkStatus`.
 
 Per the task boundary, Task 1 did not modify those Task 2-owned files.
+
+## Review fix round 1: independent review and link status
+
+The initial migration incorrectly derived `linkStatus` from the existing `reviewStatus`. The fix preserves every existing review status while marking all 39 existing URLs `linkStatus: unchecked` until an independent link check supplies evidence otherwise.
+
+Coverage added in `tests/content/content.test.ts`:
+
+- The published catalog must contain 39 `unchecked` links and both `verified/unchecked` and `unverified/unchecked` status pairs.
+- A focused synthetic catalog preserves the cross-pairs `verified/unchecked` and `unverified/verified`, proving the two dimensions are accepted and retained independently.
+
+### Round 1 RED
+
+Command:
+
+```text
+npx vitest run tests/content/content.test.ts
+```
+
+Key output (exit 1):
+
+```text
+tests/content/content.test.ts (12 tests | 1 failed)
+AssertionError: expected false to be true
+Test Files  1 failed (1)
+Tests       1 failed | 11 passed (12)
+```
+
+The published-catalog assertion failed because the 10 entries with `reviewStatus: verified` still had `linkStatus: verified` without independent link-check evidence.
+
+### Round 1 GREEN (focused)
+
+Command:
+
+```text
+npx vitest run tests/content/content.test.ts tests/content/content-files.test.ts
+```
+
+Key output (exit 0):
+
+```text
+Test Files  2 passed (2)
+Tests       13 passed (13)
+```
+
+### Round 1 GREEN (full test suite)
+
+Command:
+
+```text
+npm test
+```
+
+Key output (exit 0):
+
+```text
+Generated 39 sites across 5 categories.
+Test Files  6 passed (6)
+Tests       30 passed (30)
+```

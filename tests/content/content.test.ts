@@ -64,6 +64,41 @@ describe("compileCatalog", () => {
     expect(catalog.sites.map((site) => site.domain)).toEqual(["github.com", "appnee.com"]);
   });
 
+  it("keeps review status and link status independent", () => {
+    const catalog = compileCatalog(categories, [
+      {
+        path: "content/sites/common.yml",
+        yaml: `
+- id: reviewed-unchecked
+  name: Reviewed but unchecked
+  url: https://reviewed.example.com/
+  description: 内容已审核但链接未独立检查
+  category: common
+  tags: [工具]
+  riskLevel: standard
+  reviewStatus: verified
+  linkStatus: unchecked
+  source: { kind: manual }
+- id: unreviewed-checked
+  name: Unreviewed but checked
+  url: https://checked.example.com/
+  description: 内容未审核但链接已独立检查
+  category: common
+  tags: [工具]
+  riskLevel: standard
+  reviewStatus: unverified
+  linkStatus: verified
+  source: { kind: manual }
+`,
+      },
+    ]);
+
+    expect(catalog.sites.map((site) => [site.reviewStatus, site.linkStatus])).toEqual([
+      ["verified", "unchecked"],
+      ["unverified", "verified"],
+    ]);
+  });
+
   it("rejects duplicate normalized URLs", () => {
     expect(() =>
       compileCatalog(categories, [
@@ -324,6 +359,10 @@ describe("compileCatalog", () => {
     );
 
     expect(catalog.sites).toHaveLength(39);
+    expect(catalog.sites.every((site) => site.linkStatus === "unchecked")).toBe(true);
+    expect(new Set(catalog.sites.map((site) => `${site.reviewStatus}/${site.linkStatus}`))).toEqual(
+      new Set(["verified/unchecked", "unverified/unchecked"]),
+    );
     expect(catalog.sites.filter((site) => site.category === "windows")).toHaveLength(14);
     expect(catalog.sites.filter((site) => site.category === "mac")).toHaveLength(9);
     expect(catalog.sites.filter((site) => site.category === "cross-platform")).toHaveLength(6);
