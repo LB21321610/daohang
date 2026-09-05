@@ -8,6 +8,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source:
     kind: carrot
     url: https://github.com/xx025/carrot
@@ -21,6 +22,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: notion-ai
   name: Notion AI
@@ -32,6 +34,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: perplexity
   name: Perplexity
@@ -43,6 +46,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: midjourney
   name: Midjourney
@@ -54,4 +58,5 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }

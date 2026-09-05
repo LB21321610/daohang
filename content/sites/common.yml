@@ -8,6 +8,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: github
   name: GitHub
@@ -19,6 +20,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: zhihu
   name: 知乎
@@ -30,6 +32,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: bilibili
   name: 哔哩哔哩
@@ -41,6 +44,7 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }
 - id: microsoft
   name: 微软官网
@@ -52,4 +56,5 @@
   featured: true
   riskLevel: standard
   reviewStatus: verified
+  linkStatus: verified
   source: { kind: manual }

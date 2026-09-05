@@ -61,7 +61,7 @@ export function compileCatalog(categoriesYaml: string, siteDocuments: SiteDocume
     return result.data;
   });
 
-  const categorySet = new Set(categories.map((category) => category.id));
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
   const ids = new Set<string>();
   const urls = new Set<string>();
   const sites: Site[] = [];
@@ -74,11 +74,31 @@ export function compileCatalog(categoriesYaml: string, siteDocuments: SiteDocume
       if (!result.success) throw formatValidationError(`${document.path}[${index}]`, result.error);
 
       const input = result.data;
-      if (!categorySet.has(input.category)) {
+      const category = categoryById.get(input.category);
+      if (!category) {
         throw new Error(`${document.path}[${index}]: unknown category ${input.category}`);
       }
       if (ids.has(input.id)) {
         throw new Error(`${document.path}[${index}]: duplicate ID ${input.id}`);
+      }
+
+      const sections = category.sections;
+      if (sections) {
+        if (!input.section || !sections.some((section) => section.id === input.section)) {
+          throw new Error(
+            `${document.path}[${index}]: section ${input.section ?? "is required"} is not configured for category ${input.category}`,
+          );
+        }
+      } else if (input.section) {
+        throw new Error(
+          `${document.path}[${index}]: section ${input.section} is not allowed for category ${input.category}`,
+        );
+      }
+
+      ids.add(input.id);
+      if (input.linkStatus === "unavailable") {
+        sites.push(input);
+        return;
       }
 
       const normalized = normalizeUrl(input.url, `${document.path}[${index}]`);
@@ -86,7 +106,6 @@ export function compileCatalog(categoriesYaml: string, siteDocuments: SiteDocume
         throw new Error(`${document.path}[${index}]: duplicate URL ${normalized.domain}`);
       }
 
-      ids.add(input.id);
       urls.add(normalized.url);
       sites.push({ ...input, ...normalized });
     });
