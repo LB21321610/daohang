@@ -418,6 +418,42 @@ describe("compileCatalog", () => {
     ).toThrow(/content\/sites\/games\.yml.*section.*missing/i);
   });
 
+  it("rejects sites that omit the section in a sectioned category", () => {
+    expect(() =>
+      compileCatalog(
+        `${categories}
+- id: games
+  label: 游戏
+  navLabel: 游戏
+  homeLabel: 游戏
+  order: 30
+  homeMode: first
+  homeGroup: games
+  homeOrder: 30
+  sections:
+    - { id: stores, label: 商店, order: 10 }
+`,
+        [
+          {
+            path: "content/sites/games.yml",
+            yaml: `
+- id: steam
+  name: Steam
+  url: https://store.steampowered.com/
+  description: 游戏商店
+  category: games
+  tags: [游戏]
+  riskLevel: standard
+  reviewStatus: unverified
+  linkStatus: unchecked
+  source: { kind: manual }
+`,
+          },
+        ],
+      ),
+    ).toThrow(/content\/sites\/games\.yml.*section/i);
+  });
+
   it("rejects site sections for categories without configured sections", () => {
     expect(() =>
       compileCatalog(categories, [

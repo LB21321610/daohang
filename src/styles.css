@@ -258,7 +258,7 @@ button {
   text-decoration: none;
 }
 
-.site-link:hover .site-name {
+.site-link:not(.site-link--unavailable):hover .site-name {
   color: #246bfd;
 }
 
