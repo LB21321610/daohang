@@ -22,12 +22,14 @@ export function searchSites(sites: Site[], categories: Category[], rawQuery: str
   return sites
     .map((site, index) => {
       const category = categoryById.get(site.category);
+      const section = category?.sections?.find((candidate) => candidate.id === site.section);
       const score = Math.max(
         scoreField(site.name, query, 120, 105, 80),
-        scoreField(site.domain, query, 115, 100, 76),
+        ...(site.linkStatus === "unavailable" ? [] : [scoreField(site.domain, query, 115, 100, 76)]),
         ...(site.aliases ?? []).map((alias) => scoreField(alias, query, 110, 95, 72)),
         scoreField(site.description, query, 70, 64, 52),
         ...site.tags.map((tag) => scoreField(tag, query, 86, 78, 58)),
+        ...(section ? [scoreField(section.label, query, 88, 80, 59)] : []),
         ...(category
           ? [category.label, category.navLabel, category.homeLabel].map((label) =>
               scoreField(label, query, 90, 82, 60),

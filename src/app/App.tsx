@@ -6,12 +6,15 @@ import {
   ChatCircleDots,
   Compass,
   Desktop,
+  FilmStrip,
+  GameController,
   GithubLogo,
   Globe,
   GoogleLogo,
   House,
   Info,
   MagnifyingGlass,
+  Newspaper,
   NotionLogo,
   OpenAiLogo,
   PaintBrush,
@@ -27,7 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } fr
 
 import generatedCatalog from "../generated/sites.json";
 import { searchSites } from "../domain/search";
-import type { CategoryId, Site, SiteCatalog } from "../domain/site";
+import type { CategoryId, LinkedSite, Site, SiteCatalog } from "../domain/site";
 import { readFavoriteIds, toggleFavorite } from "../features/favorites/favoriteStore";
 
 const RISK_ACKNOWLEDGEMENT_KEY = "personal-nav:risk-ack:v1";
@@ -35,7 +38,7 @@ const DISCLAIMER =
   "本站仅提供公开网址索引，不存储、上传或分发第三方文件，也不对外部站点的合法性、安全性、准确性或可用性作保证。访问和使用第三方内容前，请自行确认所在地法律、软件许可及版权要求；由此产生的风险由访问者自行承担。";
 
 type ViewId = "home" | CategoryId;
-type ModalState = { kind: "disclaimer" } | { kind: "risk"; site: Site } | null;
+type ModalState = { kind: "disclaimer" } | { kind: "risk"; site: LinkedSite } | null;
 
 interface AppProps {
   catalog?: SiteCatalog;
@@ -70,6 +73,9 @@ const navIconById: Record<CategoryId, Icon> = {
   windows: WindowsLogo,
   mac: AppleLogo,
   "cross-platform": SquaresFour,
+  games: GameController,
+  video: FilmStrip,
+  media: Newspaper,
 };
 
 function getStoredFavorites(): string[] {
@@ -97,7 +103,7 @@ function Modal({
 }: {
   state: Exclude<ModalState, null>;
   onClose: () => void;
-  onContinue: (site: Site) => void;
+  onContinue: (site: LinkedSite) => void;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -198,9 +204,27 @@ function SiteRow({
   site: Site;
   isFavorite: boolean;
   onFavorite: (siteId: string) => void;
-  onRiskClick: (event: MouseEvent<HTMLElement>, site: Site) => void;
+  onRiskClick: (event: MouseEvent<HTMLElement>, site: LinkedSite) => void;
   riskAcknowledged: boolean;
 }) {
+  if (site.linkStatus === "unavailable") {
+    return (
+      <article
+        aria-disabled="true"
+        aria-label={`${site.name}，${site.description}，暂无稳定链接`}
+        className="site-row site-row--unavailable"
+        role="group"
+      >
+        <div className="site-link site-link--unavailable">
+          <SiteIcon site={site} />
+          <span className="site-name">{site.name}</span>
+          <span className="site-description">{site.description}</span>
+        </div>
+        <span className="site-unavailable-status">暂无稳定链接</span>
+      </article>
+    );
+  }
+
   const gated = site.riskLevel === "high" && !riskAcknowledged;
   const contents = (
     <>
@@ -261,7 +285,7 @@ function SiteSection({
   favoriteIds: string[];
   onFavorite: (siteId: string) => void;
   onDisclaimer: () => void;
-  onRiskClick: (event: MouseEvent<HTMLElement>, site: Site) => void;
+  onRiskClick: (event: MouseEvent<HTMLElement>, site: LinkedSite) => void;
   riskAcknowledged: boolean;
 }) {
   return (
@@ -321,6 +345,19 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     if (activeView !== "home") {
       const category = categoryById.get(activeView);
       const sites = catalog.sites.filter((site) => site.category === activeView);
+      if (category?.sections) {
+        return [...category.sections]
+          .sort((left, right) => left.order - right.order)
+          .map((categorySection) => {
+            const sectionSites = sites.filter((site) => site.section === categorySection.id);
+            return {
+              id: `${category.id}-${categorySection.id}`,
+              title: categorySection.label,
+              sites: sectionSites,
+              showsDisclaimer: sectionSites.some((site) => site.riskLevel === "high"),
+            };
+          });
+      }
       return category
         ? [
             {
@@ -373,12 +410,12 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     setFavoriteIds(toggleFavorite(window.localStorage, siteId));
   };
 
-  const handleRiskClick = (event: MouseEvent<HTMLElement>, site: Site) => {
+  const handleRiskClick = (event: MouseEvent<HTMLElement>, site: LinkedSite) => {
     event.preventDefault();
     setModal({ kind: "risk", site });
   };
 
-  const handleContinue = (site: Site) => {
+  const handleContinue = (site: LinkedSite) => {
     window.sessionStorage.setItem(RISK_ACKNOWLEDGEMENT_KEY, "true");
     setRiskAcknowledged(true);
     setModal(null);
@@ -446,7 +483,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
         </header>
 
         <main className="main-content">
-          {sections[0]?.sites.length === 0 ? (
+          {query.trim() && sections[0]?.sites.length === 0 ? (
             <div className="empty-state">
               <MagnifyingGlass size={32} />
               <h2>没有找到匹配的网站</h2>

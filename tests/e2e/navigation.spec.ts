@@ -77,6 +77,26 @@ test("keeps the mobile layout within the viewport", async ({ page }, testInfo) =
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
 });
 
+test("keeps the last navigation item and disclaimer reachable on a short desktop", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Short desktop-only layout check");
+  await page.setViewportSize({ width: 1280, height: 700 });
+  await page.goto("./");
+
+  await expect(page.locator(".sidebar")).toHaveCSS("overflow-y", "auto");
+
+  const lastNavigationItem = page.locator(".nav-item").last();
+  await lastNavigationItem.scrollIntoViewIfNeeded();
+  await expect(lastNavigationItem).toBeVisible();
+  await lastNavigationItem.click();
+  await expect(lastNavigationItem).toHaveAttribute("aria-current", "page");
+
+  const disclaimer = page.getByRole("button", { name: "免责声明" });
+  await disclaimer.scrollIntoViewIfNeeded();
+  await expect(disclaimer).toBeVisible();
+  await disclaimer.click();
+  await expect(page.getByRole("dialog", { name: "免责声明" })).toBeVisible();
+});
+
 test("requires confirmation again in a fresh browser session", async ({ browser, page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "Desktop covers the session lifecycle");
 

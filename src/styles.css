@@ -65,6 +65,7 @@ button {
   padding: 26px 18px 20px;
   background: #ffffff;
   border-right: 1px solid #e6e8ec;
+  overflow-y: auto;
 }
 
 .brand {
@@ -267,6 +268,21 @@ button {
   border: 0;
   cursor: pointer;
   text-align: left;
+}
+
+.site-link--unavailable {
+  color: #8b919c;
+}
+
+.site-row--unavailable .site-name {
+  color: #656c78;
+}
+
+.site-unavailable-status {
+  justify-self: end;
+  padding: 0 8px;
+  color: #9298a3;
+  font-size: 14px;
 }
 
 .site-icon {
@@ -517,6 +533,7 @@ button {
     padding: 12px 16px 10px;
     border-right: 0;
     border-bottom: 1px solid #e6e8ec;
+    overflow-y: visible;
   }
 
   .brand {
@@ -625,6 +642,14 @@ button {
 
   .favorite-button span {
     display: none;
+  }
+
+  .site-unavailable-status {
+    max-width: 45px;
+    padding: 0;
+    font-size: 11px;
+    line-height: 1.15;
+    text-align: center;
   }
 
   .site-name {

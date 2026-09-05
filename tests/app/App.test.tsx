@@ -58,6 +58,40 @@ const catalog: SiteCatalog = {
       homeGroup: "software",
       homeOrder: 30,
     },
+    {
+      id: "games",
+      label: "游戏",
+      navLabel: "游戏",
+      homeLabel: "游戏",
+      order: 60,
+      homeMode: "hidden",
+      homeGroup: "games",
+      homeOrder: 60,
+      sections: [
+        { id: "tools", label: "游戏工具", order: 20 },
+        { id: "stores", label: "游戏商店", order: 10 },
+      ],
+    },
+    {
+      id: "video",
+      label: "影视",
+      navLabel: "影视",
+      homeLabel: "影视",
+      order: 70,
+      homeMode: "hidden",
+      homeGroup: "video",
+      homeOrder: 70,
+    },
+    {
+      id: "media",
+      label: "媒体",
+      navLabel: "媒体",
+      homeLabel: "媒体",
+      order: 80,
+      homeMode: "hidden",
+      homeGroup: "media",
+      homeOrder: 80,
+    },
   ],
   sites: [
     {
@@ -70,6 +104,7 @@ const catalog: SiteCatalog = {
       tags: ["代码"],
       icon: "github",
       featured: true,
+      linkStatus: "verified",
       riskLevel: "standard",
       reviewStatus: "verified",
       source: { kind: "manual" },
@@ -84,6 +119,7 @@ const catalog: SiteCatalog = {
       tags: ["AI"],
       icon: "openai",
       featured: true,
+      linkStatus: "verified",
       riskLevel: "standard",
       reviewStatus: "verified",
       source: { kind: "manual" },
@@ -98,7 +134,48 @@ const catalog: SiteCatalog = {
       tags: ["软件"],
       icon: "app-window",
       featured: true,
+      linkStatus: "unchecked",
       riskLevel: "high",
+      reviewStatus: "unverified",
+      source: { kind: "manual" },
+    },
+    {
+      id: "steam",
+      name: "Steam",
+      url: "https://store.steampowered.com/",
+      domain: "store.steampowered.com",
+      description: "PC 游戏数字商店",
+      category: "games",
+      section: "stores",
+      tags: ["游戏"],
+      linkStatus: "verified",
+      riskLevel: "standard",
+      reviewStatus: "verified",
+      source: { kind: "manual" },
+    },
+    {
+      id: "gog",
+      name: "GOG",
+      url: "https://www.gog.com/",
+      domain: "gog.com",
+      description: "DRM-free 游戏商店",
+      category: "games",
+      section: "stores",
+      tags: ["游戏"],
+      linkStatus: "verified",
+      riskLevel: "standard",
+      reviewStatus: "verified",
+      source: { kind: "manual" },
+    },
+    {
+      id: "legacy-game-tool",
+      name: "Legacy Game Tool",
+      description: "旧版游戏工具",
+      category: "games",
+      section: "tools",
+      tags: ["工具"],
+      linkStatus: "unavailable",
+      riskLevel: "standard",
       reviewStatus: "unverified",
       source: { kind: "manual" },
     },
@@ -135,6 +212,34 @@ describe("App", () => {
 
     expect(screen.getByRole("link", { name: /GitHub/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /ChatGPT/ })).not.toBeInTheDocument();
+  });
+
+  it("renders configured category sections in order while preserving site order", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+
+    const headings = screen.getAllByRole("heading", { level: 2 });
+    expect(headings.map((heading) => heading.textContent)).toEqual(["游戏商店", "游戏工具"]);
+    const stores = screen.getByRole("region", { name: "游戏商店" });
+    expect(within(stores).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "SteamPC 游戏数字商店",
+      "GOGDRM-free 游戏商店",
+    ]);
+  });
+
+  it("searches section labels and renders unavailable entries as disabled rows", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "游戏工具");
+
+    const unavailable = screen.getByRole("group", { name: /Legacy Game Tool/ });
+    expect(unavailable).toHaveAttribute("aria-disabled", "true");
+    expect(within(unavailable).getByText("暂无稳定链接")).toBeInTheDocument();
+    expect(within(unavailable).queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "收藏 Legacy Game Tool" })).not.toBeInTheDocument();
   });
 
   it("stores a favorite without opening the site", async () => {
