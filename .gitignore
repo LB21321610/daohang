@@ -1,0 +1,10 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+artifacts/
+src/generated/*.json
+content/imports/carrot.generated.yml
+.superpowers/
+.DS_Store
+AGENTS.md

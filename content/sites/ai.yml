@@ -1,0 +1,57 @@
+- id: chatgpt
+  name: ChatGPT
+  url: https://chatgpt.com/
+  description: OpenAI 智能对话助手
+  category: ai
+  tags: [对话, 助手]
+  icon: openai
+  featured: true
+  riskLevel: standard
+  reviewStatus: verified
+  source:
+    kind: carrot
+    url: https://github.com/xx025/carrot
+- id: claude
+  name: Claude
+  url: https://claude.ai/
+  description: Anthropic 推出的 AI 助手
+  category: ai
+  tags: [对话, 助手]
+  icon: anthropic
+  featured: true
+  riskLevel: standard
+  reviewStatus: verified
+  source: { kind: manual }
+- id: notion-ai
+  name: Notion AI
+  url: https://www.notion.so/product/ai
+  description: 面向写作与知识管理的 AI 工具
+  category: ai
+  tags: [写作, 知识管理]
+  icon: notion
+  featured: true
+  riskLevel: standard
+  reviewStatus: verified
+  source: { kind: manual }
+- id: perplexity
+  name: Perplexity
+  url: https://www.perplexity.ai/
+  description: 提供来源引用的 AI 搜索工具
+  category: ai
+  tags: [搜索, 研究]
+  icon: perplexity
+  featured: true
+  riskLevel: standard
+  reviewStatus: verified
+  source: { kind: manual }
+- id: midjourney
+  name: Midjourney
+  url: https://www.midjourney.com/
+  description: AI 图像生成平台
+  category: ai
+  tags: [图像, 生成]
+  icon: midjourney
+  featured: true
+  riskLevel: standard
+  reviewStatus: verified
+  source: { kind: manual }
