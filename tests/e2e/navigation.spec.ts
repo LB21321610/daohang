@@ -16,6 +16,31 @@ test("renders the navigation shell and supports global search", async ({ page },
   await expect(page.getByRole("link", { name: /GitHub/ })).toHaveCount(0);
 });
 
+test("browses and searches the audio catalog without horizontal overflow", async ({ page }) => {
+  await page.goto("./");
+
+  await page.getByRole("button", { name: "音频" }).click();
+  await expect(page.getByRole("heading", { name: "DAW 与 DJ" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "插件套装" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "虚拟乐器与采样器" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "混音与母带" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "人声处理与修复" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "混响与创意效果" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "吉他与贝斯" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "鼓与节奏" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Ableton Live 12 Suite/ })).toBeVisible();
+
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+
+  await page.getByPlaceholder("搜索网站、分类或标签").fill("Mantra");
+  await expect(page.getByRole("link", { name: /Neural DSP Mantra/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Ableton Live 12 Suite/ })).toHaveCount(0);
+});
+
 test("persists favorites after a reload", async ({ page }) => {
   await page.goto("./");
 

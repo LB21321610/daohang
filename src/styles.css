@@ -348,7 +348,15 @@ button {
   border-color: #2877e8;
 }
 
+.site-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .site-name {
+  min-width: 0;
   overflow: hidden;
   color: #181c23;
   font-size: 19px;
@@ -356,6 +364,19 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: color 150ms ease;
+}
+
+.site-link-status {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  color: #796122;
+  background: #fff7d6;
+  border: 1px solid #f0dfa0;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .site-description {
@@ -654,5 +675,14 @@ button {
 
   .site-name {
     font-size: 17px;
+  }
+
+  .site-title {
+    gap: 5px;
+  }
+
+  .site-link-status {
+    padding-inline: 5px;
+    font-size: 10px;
   }
 }

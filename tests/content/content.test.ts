@@ -9,118 +9,94 @@ import { discoverSiteDocuments } from "../../scripts/content-files.mts";
 type ExpectedEntry = readonly [
   section: string,
   url: string | null,
-  linkStatus: "unchecked" | "unavailable",
+  linkStatus: "verified" | "unchecked" | "unavailable",
   riskLevel: "standard" | "external" | "high",
   requiredAliases: readonly string[],
 ];
 
 const expectedCatalogEntries = {
   games: {
-    "fling-trainer": ["trainers", "https://flingtrainer.com/", "unchecked", "high", ["风灵月影"]],
-    gamecopyworld: ["trainers", "https://gamecopyworld.com/", "unchecked", "high", []],
-    megagames: ["trainers", "https://megagames.com/", "unchecked", "high", []],
-    "cheat-happens": ["trainers", "https://cheathappens.com/", "unchecked", "high", []],
-    wemod: ["trainers", "https://wemod.com/", "unchecked", "high", ["WeMod 客户端"]],
-    "trainer-dev": ["trainers", "https://trainer.dev/", "unchecked", "high", []],
-    mrantifun: ["trainers", "https://mrantifun.net/", "unchecked", "high", []],
-    "game-trainer": ["trainers", "https://game-trainer.com/", "unchecked", "high", []],
-    "fitgirl-repacks": ["game-resources", "https://fitgirl-repacks.site/", "unchecked", "high", []],
-    steamunlocked: ["game-resources", "https://steamunlocked.net/", "unchecked", "high", []],
-    steamrip: ["game-resources", "https://steamrip.com/", "unchecked", "high", []],
-    "gog-games": ["game-resources", "https://gog-games.to/", "unchecked", "high", []],
-    "ocean-of-games": ["game-resources", "https://ocean-of-games.com/", "unchecked", "high", []],
-    "igg-games": ["game-resources", "https://igg-games.com/", "unchecked", "high", []],
-    kaoskrew: ["game-resources", "https://kaoskrew.org/", "unchecked", "high", []],
-    "dodi-repacks": ["game-resources", "https://dodi-repacks.site/", "unchecked", "high", []],
-    elamigos: ["game-resources", "https://elamigos.site/", "unchecked", "high", []],
-    gload: ["game-resources", "https://gload.cc/", "unchecked", "high", []],
-    "online-fix": ["game-resources", "https://online-fix.me/", "unchecked", "high", []],
-    "cs-rin-ru": ["game-resources", "https://cs.rin.ru/", "unchecked", "high", []],
-    "nexus-mods": ["mods-tools", "https://nexusmods.com/", "unchecked", "standard", []],
-    moddb: ["mods-tools", "https://moddb.com/", "unchecked", "standard", []],
-    gamebanana: ["mods-tools", "https://gamebanana.com/", "unchecked", "standard", []],
-    "fling-mods": ["mods-tools", "https://flingtrainer.com/mods", "unchecked", "high", []],
-    "3dmgame": ["mods-tools", "https://3dmgame.com/", "unchecked", "high", ["3DM"]],
-    ali213: ["mods-tools", "https://ali213.net/", "unchecked", "high", ["Ali213"]],
-    "guided-hacking": ["security-research", "https://guidedhacking.com/", "unchecked", "high", []],
-    "acidmods-gamehacking": ["security-research", "https://gamehacking.acidmods.com/", "unchecked", "high", []],
-    "cheat-engine": ["security-research", "https://cheatengine.org/", "unchecked", "high", []],
-    unknowncheats: ["security-research", "https://unknowncheats.me/", "unchecked", "high", []],
+    "fling-trainer": ["trainers","https://flingtrainer.com/","verified","high",["风灵月影"]],
+    gamecopyworld: ["trainers","https://gamecopyworld.com/games/index.php","verified","high",[]],
+    megagames: ["trainers","https://megagames.com/","verified","high",[]],
+    "cheat-happens": ["trainers","https://www.cheathappens.com/","verified","high",[]],
+    wemod: ["trainers","https://www.wemod.com/","verified","high",["WeMod 客户端"]],
+    mrantifun: ["trainers","https://mrantifun.net/","verified","high",[]],
+    "game-trainer": ["trainers","https://www.game-trainer.com/","verified","high",[]],
+    "fitgirl-repacks": ["game-resources","https://fitgirl-repacks.site/","verified","high",[]],
+    steamunlocked: ["game-resources","https://steamunlocked.org/","verified","high",[]],
+    steamrip: ["game-resources","https://steamrip.com/","verified","high",[]],
+    "ocean-of-games": ["game-resources","https://ocean-of-games.com/","verified","high",[]],
+    "igg-games": ["game-resources","https://igg-games.com/","verified","high",[]],
+    kaoskrew: ["game-resources","https://kaoskrew.org/","unchecked","high",[]],
+    "dodi-repacks": ["game-resources","https://dodi-repacks.site/","verified","high",[]],
+    elamigos: ["game-resources","https://elamigos.site/","verified","high",[]],
+    gload: ["game-resources","https://gload.to/","verified","high",[]],
+    "online-fix": ["game-resources","https://online-fix.me/","verified","high",[]],
+    "cs-rin-ru": ["game-resources","https://cs.rin.ru/","verified","high",[]],
+    "nexus-mods": ["mods-tools","https://www.nexusmods.com/","verified","standard",[]],
+    moddb: ["mods-tools","https://www.moddb.com/","verified","standard",[]],
+    gamebanana: ["mods-tools","https://gamebanana.com/","verified","standard",[]],
+    "3dmgame": ["mods-tools","https://www.3dmgame.com/","verified","high",["3DM"]],
+    ali213: ["mods-tools","https://www.ali213.net/","unchecked","high",["Ali213"]],
+    "guided-hacking": ["security-research","https://guidedhacking.com/","unchecked","high",[]],
+    "cheat-engine": ["security-research","https://cheatengine.org/","verified","high",[]],
+    unknowncheats: ["security-research","https://unknowncheats.me/","unchecked","high",[]],
   },
   video: {
-    "yt-dlp": ["cli-open-source", "https://github.com/yt-dlp/yt-dlp", "unchecked", "standard", []],
-    "you-get": ["cli-open-source", "https://github.com/soimort/you-get", "unchecked", "standard", []],
-    lux: ["cli-open-source", "https://github.com/iawia002/lux", "unchecked", "standard", ["annie"]],
-    bbdown: ["cli-open-source", "https://github.com/nilaoda/BBDown", "unchecked", "standard", []],
-    bilix: ["cli-open-source", "https://github.com/HFrost0/bilix", "unchecked", "standard", []],
-    "n-m3u8dl-re": ["cli-open-source", "https://github.com/nilaoda/N_m3u8DL-RE", "unchecked", "standard", []],
-    "tiktok-downloader": ["cli-open-source", "https://github.com/JoeanAmier/TikTok-Downloader", "unchecked", "standard", []],
-    aria2: ["cli-open-source", "https://github.com/aria2/aria2", "unchecked", "standard", []],
-    ffmpeg: ["cli-open-source", "https://ffmpeg.org/", "unchecked", "standard", []],
-    "streamlink-github": ["cli-open-source", "https://github.com/streamlink/streamlink", "unchecked", "standard", []],
-    streamlink: ["cli-open-source", "https://streamlink.github.io/", "unchecked", "standard", []],
-    bento4: ["cli-open-source", "https://www.bento4.com/", "unchecked", "standard", ["mp4decrypter"]],
-    "shaka-packager": ["cli-open-source", "https://github.com/shaka-project/shaka-packager", "unchecked", "standard", []],
-    "4k-video-downloader": ["desktop-clients", "https://www.4kdownload.com/", "unchecked", "standard", []],
-    "jdownloader-2": ["desktop-clients", "https://jdownloader.org/", "unchecked", "standard", []],
-    motrix: ["desktop-clients", "https://motrix.app/", "unchecked", "standard", []],
-    "free-download-manager": ["desktop-clients", "https://www.freedownloadmanager.org/", "unchecked", "standard", ["FDM"]],
-    "internet-download-manager": ["desktop-clients", "https://www.internetdownloadmanager.com/", "unchecked", "standard", ["IDM"]],
-    xdm: ["desktop-clients", null, "unavailable", "standard", []],
-    "neat-download-manager": ["desktop-clients", "https://www.neatdownloadmanager.com/", "unchecked", "standard", []],
-    cobalt: ["online-downloaders", "https://cobalt.tools/", "unchecked", "external", []],
-    y2mate: ["online-downloaders", "https://www.y2mate.com/", "unchecked", "external", []],
-    savefrom: ["online-downloaders", "https://savefrom.net/", "unchecked", "external", []],
-    ssyoutube: ["online-downloaders", "https://ssyoutube.com/", "unchecked", "external", []],
-    "video-downloadhelper": ["browser-extensions", "https://www.downloadhelper.net/", "unchecked", "standard", []],
-    "hls-downloader": ["browser-extensions", null, "unavailable", "standard", []],
-    "stream-recorder": ["browser-extensions", null, "unavailable", "standard", []],
-    "widevine-l3-decryptor": ["drm-tools", "https://github.com/nicholasgasior/widevine-l3-decryptor", "unchecked", "high", ["WidevineDecryptor"]],
-    freegrabapp: ["drm-tools", "https://freegrabapp.com/", "unchecked", "high", []],
-    flixgrab: ["drm-tools", "https://www.flixgrab.com/", "unchecked", "high", []],
-    streamfab: ["drm-tools", "https://www.dvdfab.cn/streamfab.htm", "unchecked", "high", []],
-    cleverget: ["drm-tools", "https://www.cleverget.com/", "unchecked", "high", []],
-    noteburner: ["drm-tools", "https://www.noteburner.com/", "unchecked", "high", []],
-    anystream: ["drm-tools", "https://www.redfox.bz/anystream.html", "unchecked", "high", []],
+    "yt-dlp": ["cli-open-source","https://github.com/yt-dlp/yt-dlp","verified","standard",[]],
+    "you-get": ["cli-open-source","https://github.com/soimort/you-get","verified","standard",[]],
+    lux: ["cli-open-source","https://github.com/iawia002/lux","verified","standard",["annie"]],
+    bbdown: ["cli-open-source","https://github.com/nilaoda/BBDown","verified","standard",[]],
+    bilix: ["cli-open-source","https://github.com/HFrost0/bilix","verified","standard",[]],
+    "n-m3u8dl-re": ["cli-open-source","https://github.com/nilaoda/N_m3u8DL-RE","verified","standard",[]],
+    "tiktok-downloader": ["cli-open-source","https://github.com/JoeanAmier/TikTokDownloader","verified","standard",[]],
+    aria2: ["cli-open-source","https://github.com/aria2/aria2","verified","standard",[]],
+    ffmpeg: ["cli-open-source","https://ffmpeg.org/","verified","standard",[]],
+    "streamlink-github": ["cli-open-source","https://github.com/streamlink/streamlink","verified","standard",[]],
+    streamlink: ["cli-open-source","https://streamlink.github.io/","verified","standard",[]],
+    bento4: ["cli-open-source","https://www.bento4.com/","verified","standard",["mp4decrypter"]],
+    "shaka-packager": ["cli-open-source","https://github.com/shaka-project/shaka-packager","verified","standard",[]],
+    "4k-video-downloader": ["desktop-clients","https://www.4kdownload.com/","verified","standard",[]],
+    "jdownloader-2": ["desktop-clients","https://jdownloader.org/","verified","standard",[]],
+    motrix: ["desktop-clients","https://motrix.app/","verified","standard",[]],
+    "free-download-manager": ["desktop-clients","https://www.freedownloadmanager.org/","verified","standard",["FDM"]],
+    "internet-download-manager": ["desktop-clients","https://www.internetdownloadmanager.com/","verified","standard",["IDM"]],
+    xdm: ["desktop-clients","https://github.com/subhra74/xdm","verified","standard",[]],
+    "neat-download-manager": ["desktop-clients","https://www.neatdownloadmanager.com/","verified","standard",[]],
+    cobalt: ["online-downloaders","https://cobalt.tools/","verified","external",[]],
+    y2mate: ["online-downloaders","https://y2mate.is/","verified","external",[]],
+    savefrom: ["online-downloaders","https://savefrom.net/","verified","external",[]],
+    ssyoutube: ["online-downloaders","https://ssyoutube.com/","verified","external",[]],
+    "video-downloadhelper": ["browser-extensions","https://downloadhelper.net/","verified","standard",[]],
+    "hls-downloader": ["browser-extensions","https://github.com/puemos/hls-downloader","verified","standard",[]],
+    "stream-recorder": ["browser-extensions","https://chromewebstore.google.com/detail/stream-recorder-hls-m3u8/iogidnfllpdhagebkblkgbfijkbkjdmm","verified","standard",[]],
+    "widevine-l3-decryptor": ["drm-tools","https://github.com/tbodt/widevine-l3-decryptor","verified","high",["WidevineDecryptor"]],
+    freegrabapp: ["drm-tools","https://freegrabapp.com/","verified","high",[]],
+    flixgrab: ["drm-tools","https://flixgrab.com/","verified","high",[]],
+    streamfab: ["drm-tools","https://streamfab.com/","verified","high",[]],
+    cleverget: ["drm-tools","https://cleverget.org/","verified","high",[]],
+    noteburner: ["drm-tools","https://www.noteburner.com/","verified","high",[]],
   },
   media: {
-    ddrk: ["domestic-film-tv", "https://ddrk.me/", "unchecked", "high", []],
-    zxzj: ["domestic-film-tv", "https://www.zxzj.me/", "unchecked", "high", []],
-    nunuyy: ["domestic-film-tv", "https://nunuyy.com/", "unchecked", "high", []],
-    hao6v: ["domestic-film-tv", "https://www.hao6v.com/", "unchecked", "high", []],
-    dy2018: ["domestic-film-tv", "https://www.dy2018.net/", "unchecked", "high", []],
-    ygdy8: ["domestic-film-tv", "https://www.ygdy8.com/", "unchecked", "high", []],
-    "renren-yingshi": ["domestic-film-tv", null, "unavailable", "high", []],
-    "bt-tiantang": ["domestic-film-tv", null, "unavailable", "high", []],
-    fmovies: ["international-film-tv", "https://fmovies.to/", "unchecked", "high", []],
-    "123movies": ["international-film-tv", null, "unavailable", "high", []],
-    putlocker: ["international-film-tv", null, "unavailable", "high", []],
-    solarmovie: ["international-film-tv", "https://solarmovie.pe/", "unchecked", "high", []],
-    soap2day: ["international-film-tv", null, "unavailable", "high", []],
-    yesmovies: ["international-film-tv", "https://yesmovies.ag/", "unchecked", "high", []],
-    cmovies: ["international-film-tv", "https://cmovieshd.com/", "unchecked", "high", []],
-    gomovies: ["international-film-tv", null, "unavailable", "high", []],
-    streamlord: ["international-film-tv", "https://streamlord.com/", "unchecked", "high", []],
-    moviesjoy: ["international-film-tv", "https://moviesjoy.to/", "unchecked", "high", []],
-    lookmovie: ["international-film-tv", "https://lookmovie2.to/", "unchecked", "high", []],
-    flixhq: ["international-film-tv", "https://flixhq.to/", "unchecked", "high", []],
-    kissasian: ["international-film-tv", "https://kissasian.li/", "unchecked", "high", []],
-    "9anime": ["international-film-tv", "https://9anime.to/", "unchecked", "high", []],
-    "zoro-aniwatch": ["international-film-tv", "https://aniwatch.to/", "unchecked", "high", ["Zoro.to", "Aniwatch"]],
-    gogoanime: ["international-film-tv", "https://gogoanime.gg/", "unchecked", "high", []],
-    wcostream: ["international-film-tv", "https://wcostream.tv/", "unchecked", "high", []],
-    "popcorn-time": ["media-centers", "https://popcorntime.app/", "unchecked", "high", []],
-    stremio: ["media-centers", "https://www.stremio.com/", "unchecked", "standard", []],
-    kodi: ["media-centers", "https://kodi.tv/", "unchecked", "standard", []],
-    haibao: ["private-trackers", null, "unavailable", "high", []],
-    mteam: ["private-trackers", "https://kp.m-team.cc/", "unchecked", "high", ["馒头"]],
-    hdsky: ["private-trackers", "https://hdsky.me/", "unchecked", "high", ["红豆饭"]],
-    audiences: ["private-trackers", "https://audiences.me/", "unchecked", "high", ["观众"]],
-    pterclub: ["private-trackers", "https://pterclub.com/", "unchecked", "high", []],
-    hdbits: ["private-trackers", "https://hdbits.org/", "unchecked", "high", []],
-    btn: ["private-trackers", null, "unavailable", "high", []],
-    ptp: ["private-trackers", null, "unavailable", "high", []],
-    iptorrents: ["private-trackers", "https://iptorrents.com/", "unchecked", "high", []],
+    ddrk: ["domestic-film-tv","https://ddys.app/","unchecked","high",[]],
+    zxzj: ["domestic-film-tv","https://www.zxzj.me/","unchecked","high",[]],
+    hao6v: ["domestic-film-tv","https://www.6v520.cc/","verified","high",[]],
+    dy2018: ["domestic-film-tv","https://www.dytt8899.com/","verified","high",[]],
+    yesmovies: ["international-film-tv","https://ww2.yesmovies.ag/","verified","high",[]],
+    lookmovie: ["international-film-tv","https://www.lookmovie2.to/","verified","high",[]],
+    wcostream: ["international-film-tv","https://www.wcostream.tv/","verified","high",[]],
+    "popcorn-time": ["media-centers","https://popcorntime.app/","verified","high",[]],
+    stremio: ["media-centers","https://www.stremio.com/","verified","standard",[]],
+    kodi: ["media-centers","https://kodi.tv/","verified","standard",[]],
+    mteam: ["private-trackers","https://kp.m-team.cc/","verified","high",["馒头"]],
+    hdsky: ["private-trackers","https://hdsky.me/","verified","high",["红豆饭"]],
+    audiences: ["private-trackers","https://audiences.me/","unchecked","high",["观众"]],
+    pterclub: ["private-trackers","https://pterclub.net/","verified","high",[]],
+    hdbits: ["private-trackers","https://hdbits.org/","unchecked","high",[]],
+    btn: ["private-trackers","https://broadcasthe.net/","verified","high",[]],
+    ptp: ["private-trackers","https://passthepopcorn.me/","verified","high",[]],
+    iptorrents: ["private-trackers","https://iptorrents.com/","verified","high",[]],
   },
 } as const satisfies Record<string, Record<string, ExpectedEntry>>;
 
@@ -178,6 +154,38 @@ const categories = `
 `;
 
 describe("compileCatalog", () => {
+  it("publishes repaired resource links without treating reachability as a risk review", async () => {
+    const contentDirectory = path.join(process.cwd(), "content");
+    const catalog = compileCatalog(
+      await readFile(path.join(contentDirectory, "categories.yml"), "utf8"),
+      await discoverSiteDocuments(path.join(contentDirectory, "sites"), process.cwd()),
+    );
+    const sites = new Map(catalog.sites.map((site) => [site.id, site]));
+
+    expect(sites.get("xdm")).toMatchObject({
+      url: "https://github.com/subhra74/xdm",
+      linkStatus: "verified",
+    });
+    expect(sites.get("tiktok-downloader")).toMatchObject({
+      url: "https://github.com/JoeanAmier/TikTokDownloader",
+      linkStatus: "verified",
+    });
+    expect(sites.get("streamfab")).toMatchObject({
+      url: "https://streamfab.com/",
+      linkStatus: "verified",
+      riskLevel: "high",
+      reviewStatus: "unverified",
+    });
+    expect(sites.get("ru-board")).toMatchObject({
+      url: "https://forum.ru-board.com/",
+      linkStatus: "verified",
+    });
+    expect(sites.get("pterclub")).toMatchObject({
+      url: "https://pterclub.net/",
+      linkStatus: "verified",
+    });
+  });
+
   it("normalizes domains and preserves category order", () => {
     const catalog = compileCatalog(categories, [
       {
@@ -546,19 +554,19 @@ describe("compileCatalog", () => {
       ["windows", "mac", "cross-platform"].includes(site.category),
     );
     const legacySites = catalog.sites.filter((site) =>
-      !["games", "video", "media"].includes(site.category),
+      !["games", "video", "media", "audio"].includes(site.category),
     );
 
-    expect(catalog.sites).toHaveLength(140);
-    expect(legacySites).toHaveLength(39);
-    expect(legacySites.every((site) => site.linkStatus === "unchecked")).toBe(true);
+    expect(catalog.sites).toHaveLength(236);
+    expect(legacySites).toHaveLength(29);
+    expect(legacySites.every((site) => site.linkStatus !== "unavailable")).toBe(true);
     expect(new Set(legacySites.map((site) => `${site.reviewStatus}/${site.linkStatus}`))).toEqual(
-      new Set(["verified/unchecked", "unverified/unchecked"]),
+      new Set(["verified/verified", "unverified/verified", "unverified/unchecked"]),
     );
-    expect(catalog.sites.filter((site) => site.category === "windows")).toHaveLength(14);
-    expect(catalog.sites.filter((site) => site.category === "mac")).toHaveLength(9);
-    expect(catalog.sites.filter((site) => site.category === "cross-platform")).toHaveLength(6);
-    expect(softwareSites).toHaveLength(29);
+    expect(catalog.sites.filter((site) => site.category === "windows")).toHaveLength(12);
+    expect(catalog.sites.filter((site) => site.category === "mac")).toHaveLength(3);
+    expect(catalog.sites.filter((site) => site.category === "cross-platform")).toHaveLength(4);
+    expect(softwareSites).toHaveLength(19);
     expect(softwareSites.every((site) => site.riskLevel === "high")).toBe(true);
     expect(softwareSites.every((site) => site.reviewStatus === "unverified")).toBe(true);
     expect(softwareSites.every((site) => site.source.kind === "manual")).toBe(true);
@@ -567,31 +575,21 @@ describe("compileCatalog", () => {
         "423down.com",
         "appnee.com",
         "appstorrent.ru",
-        "cmacapps.com",
-        "crackhub.site",
         "cracksurl.com",
         "filecr.com",
+        "forum.ru-board.com",
         "getintopc.com",
         "haxpc.net",
-        "hsuanchen.com",
         "igetintopc.com",
         "kubadownload.com",
-        "mac-torrent-download.net",
-        "macdownload.org",
         "macked.app",
-        "macserial.com",
-        "macwk.com",
-        "massgravel.dev",
+        "massgrave.dev",
         "msguides.com",
-        "njhax.com",
-        "nkino.com",
         "nsaneforums.com",
         "predb.org",
-        "ru-board.com",
-        "sanet.st",
-        "srrdb.com",
-        "team-os.eu",
-        "tntmac.com",
+        "softarchive.download",
+        "www.macwk.com",
+        "www.srrdb.com",
         "yasir252.com",
       ].sort(),
     );
@@ -612,7 +610,7 @@ describe("compileCatalog", () => {
       expect(sites.map((site) => site.id).sort()).toEqual(Object.keys(expectedEntries).sort());
       expect(sites.every((site) => site.reviewStatus === "unverified")).toBe(true);
       expect(sites.every((site) => site.source.kind === "manual")).toBe(true);
-      expect(sites.every((site) => ["unchecked", "unavailable"].includes(site.linkStatus))).toBe(true);
+      expect(sites.every((site) => ["verified", "unchecked"].includes(site.linkStatus))).toBe(true);
 
       for (const [id, [section, url, linkStatus, riskLevel, requiredAliases]] of Object.entries(expectedEntries)) {
         const site = sites.find((candidate) => candidate.id === id);
@@ -628,27 +626,22 @@ describe("compileCatalog", () => {
       }
     }
 
-    expect(catalog.sites.filter((site) => site.category === "games")).toHaveLength(30);
-    expect(catalog.sites.filter((site) => site.category === "video")).toHaveLength(34);
-    expect(catalog.sites.filter((site) => site.category === "media")).toHaveLength(37);
-    expect(catalog.sites.filter((site) => site.linkStatus === "unavailable").map((site) => site.id).sort()).toEqual(
-      [
-        "123movies", "bt-tiantang", "btn", "gomovies", "haibao", "hls-downloader", "ptp",
-        "putlocker", "renren-yingshi", "soap2day", "stream-recorder", "xdm",
-      ].sort(),
-    );
-    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "trainers")).toHaveLength(8);
-    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "game-resources")).toHaveLength(12);
-    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "mods-tools")).toHaveLength(6);
-    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "security-research")).toHaveLength(4);
+    expect(catalog.sites.filter((site) => site.category === "games")).toHaveLength(26);
+    expect(catalog.sites.filter((site) => site.category === "video")).toHaveLength(33);
+    expect(catalog.sites.filter((site) => site.category === "media")).toHaveLength(18);
+    expect(catalog.sites.filter((site) => site.linkStatus === "unavailable")).toHaveLength(0);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "trainers")).toHaveLength(7);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "game-resources")).toHaveLength(11);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "mods-tools")).toHaveLength(5);
+    expect(catalog.sites.filter((site) => site.category === "games" && site.section === "security-research")).toHaveLength(3);
     expect(catalog.sites.filter((site) => site.category === "video" && site.section === "cli-open-source")).toHaveLength(13);
     expect(catalog.sites.filter((site) => site.category === "video" && site.section === "desktop-clients")).toHaveLength(7);
     expect(catalog.sites.filter((site) => site.category === "video" && site.section === "online-downloaders")).toHaveLength(4);
     expect(catalog.sites.filter((site) => site.category === "video" && site.section === "browser-extensions")).toHaveLength(3);
-    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "drm-tools")).toHaveLength(7);
-    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "domestic-film-tv")).toHaveLength(8);
-    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "international-film-tv")).toHaveLength(17);
+    expect(catalog.sites.filter((site) => site.category === "video" && site.section === "drm-tools")).toHaveLength(6);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "domestic-film-tv")).toHaveLength(4);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "international-film-tv")).toHaveLength(3);
     expect(catalog.sites.filter((site) => site.category === "media" && site.section === "media-centers")).toHaveLength(3);
-    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "private-trackers")).toHaveLength(9);
+    expect(catalog.sites.filter((site) => site.category === "media" && site.section === "private-trackers")).toHaveLength(8);
   });
 });

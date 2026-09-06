@@ -7,6 +7,7 @@
   "scripts": {
     "content:build": "tsx scripts/build-content.mts",
     "content:import-carrot": "tsx scripts/import-carrot.mts",
+    "links:check": "tsx scripts/check-links.mts",
     "dev": "npm run content:build && vite",
     "build": "npm run content:build && tsc --noEmit && vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",

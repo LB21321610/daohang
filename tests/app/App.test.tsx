@@ -73,6 +73,26 @@ const catalog: SiteCatalog = {
       ],
     },
     {
+      id: "audio",
+      label: "音频",
+      navLabel: "音频",
+      homeLabel: "音频",
+      order: 65,
+      homeMode: "hidden",
+      homeGroup: "audio",
+      homeOrder: 65,
+      sections: [
+        { id: "daw-dj", label: "DAW 与 DJ", order: 10 },
+        { id: "bundles", label: "插件套装", order: 20 },
+        { id: "instruments", label: "虚拟乐器与采样器", order: 30 },
+        { id: "mixing-mastering", label: "混音与母带", order: 40 },
+        { id: "vocals-repair", label: "人声处理与修复", order: 50 },
+        { id: "reverb-effects", label: "混响与创意效果", order: 60 },
+        { id: "guitar-bass", label: "吉他与贝斯", order: 70 },
+        { id: "drums-rhythm", label: "鼓与节奏", order: 80 },
+      ],
+    },
+    {
       id: "video",
       label: "影视",
       navLabel: "影视",
@@ -168,6 +188,36 @@ const catalog: SiteCatalog = {
       source: { kind: "manual" },
     },
     {
+      id: "ableton-live-suite",
+      name: "Ableton Live 12 Suite",
+      url: "https://www.ableton.com/en/live/",
+      domain: "ableton.com",
+      description: "专业音乐制作与现场演出 DAW；清单版本 12.4.3",
+      category: "audio",
+      section: "daw-dj",
+      tags: ["Ableton", "DAW"],
+      aliases: ["Live Suite"],
+      linkStatus: "verified",
+      riskLevel: "standard",
+      reviewStatus: "verified",
+      source: { kind: "manual" },
+    },
+    {
+      id: "neural-dsp-mantra",
+      name: "Neural DSP Mantra",
+      url: "https://neuraldsp.com/plugins/mantra",
+      domain: "neuraldsp.com",
+      description: "人声处理插件",
+      category: "audio",
+      section: "vocals-repair",
+      tags: ["Neural DSP", "人声"],
+      aliases: ["Mantra"],
+      linkStatus: "verified",
+      riskLevel: "standard",
+      reviewStatus: "verified",
+      source: { kind: "manual" },
+    },
+    {
       id: "legacy-game-tool",
       name: "Legacy Game Tool",
       description: "旧版游戏工具",
@@ -212,6 +262,39 @@ describe("App", () => {
 
     expect(screen.getByRole("link", { name: /GitHub/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /ChatGPT/ })).not.toBeInTheDocument();
+  });
+
+  it("renders the audio category before video with all configured sections", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    const navigation = screen.getByRole("navigation", { name: "网站分类" });
+    const labels = within(navigation).getAllByRole("button").map((button) => button.textContent);
+    expect(labels.indexOf("音频")).toBeLessThan(labels.indexOf("影视"));
+
+    await user.click(within(navigation).getByRole("button", { name: "音频" }));
+
+    expect(screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      "DAW 与 DJ",
+      "插件套装",
+      "虚拟乐器与采样器",
+      "混音与母带",
+      "人声处理与修复",
+      "混响与创意效果",
+      "吉他与贝斯",
+      "鼓与节奏",
+    ]);
+    expect(screen.getByRole("link", { name: /Ableton Live 12 Suite/ })).toBeInTheDocument();
+  });
+
+  it("finds audio software by alias", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "Mantra");
+
+    expect(screen.getByRole("link", { name: /Neural DSP Mantra/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Ableton Live 12 Suite/ })).not.toBeInTheDocument();
   });
 
   it("renders configured category sections in order while preserving site order", async () => {
@@ -290,6 +373,21 @@ describe("App", () => {
     expect(acknowledgedLink).toHaveAttribute("href", "https://appnee.com/");
     await user.click(acknowledgedLink);
     expect(screen.queryByRole("dialog", { name: "访问外部站点" })).not.toBeInTheDocument();
+  });
+
+  it("labels unchecked links for sighted and screen-reader users without changing verified links", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    const uncheckedLink = screen.getByRole("link", { name: /AppNee.*待核验/ });
+    expect(within(uncheckedLink).getByText("待核验")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /GitHub/ })).not.toHaveAccessibleName(/待核验/);
+
+    await user.click(screen.getByRole("button", { name: "收藏 AppNee" }));
+    expect(screen.getByRole("button", { name: "取消收藏 AppNee" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: /AppNee.*待核验/ }));
+    expect(screen.getByRole("dialog", { name: "访问外部站点" })).toBeInTheDocument();
   });
 
   it("keeps the warning visible when search results include a high-risk site", async () => {

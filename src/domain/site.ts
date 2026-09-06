@@ -7,6 +7,7 @@ export const categoryIds = [
   "mac",
   "cross-platform",
   "games",
+  "audio",
   "video",
   "media",
 ] as const;

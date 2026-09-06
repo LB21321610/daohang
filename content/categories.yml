@@ -51,6 +51,23 @@
     - { id: game-resources, label: 游戏资源, order: 20 }
     - { id: mods-tools, label: 游戏 MOD / 工具, order: 30 }
     - { id: security-research, label: 游戏安全研究, order: 40 }
+- id: audio
+  label: 音频
+  navLabel: 音频
+  homeLabel: 音频
+  order: 65
+  homeMode: hidden
+  homeGroup: audio
+  homeOrder: 65
+  sections:
+    - { id: daw-dj, label: DAW 与 DJ, order: 10 }
+    - { id: bundles, label: 插件套装, order: 20 }
+    - { id: instruments, label: 虚拟乐器与采样器, order: 30 }
+    - { id: mixing-mastering, label: 混音与母带, order: 40 }
+    - { id: vocals-repair, label: 人声处理与修复, order: 50 }
+    - { id: reverb-effects, label: 混响与创意效果, order: 60 }
+    - { id: guitar-bass, label: 吉他与贝斯, order: 70 }
+    - { id: drums-rhythm, label: 鼓与节奏, order: 80 }
 - id: video
   label: 视频
   navLabel: 视频

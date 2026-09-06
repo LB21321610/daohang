@@ -3,58 +3,58 @@
   url: https://www.google.com/
   description: 全球通用搜索引擎
   category: common
-  tags: [搜索, 工具]
+  tags: [ 搜索, 工具 ]
   icon: google
   featured: true
   riskLevel: standard
   reviewStatus: verified
-  linkStatus: unchecked
+  linkStatus: verified
   source: { kind: manual }
 - id: github
   name: GitHub
   url: https://github.com/
   description: 代码托管与协作开发平台
   category: common
-  tags: [开发, 代码]
+  tags: [ 开发, 代码 ]
   icon: github
   featured: true
   riskLevel: standard
   reviewStatus: verified
-  linkStatus: unchecked
+  linkStatus: verified
   source: { kind: manual }
 - id: zhihu
   name: 知乎
   url: https://www.zhihu.com/
   description: 中文问答与知识分享社区
   category: common
-  tags: [知识, 社区]
+  tags: [ 知识, 社区 ]
   icon: zhihu
   featured: true
   riskLevel: standard
   reviewStatus: verified
-  linkStatus: unchecked
+  linkStatus: verified
   source: { kind: manual }
 - id: bilibili
   name: 哔哩哔哩
   url: https://www.bilibili.com/
   description: 视频与学习内容平台
   category: common
-  tags: [视频, 学习]
+  tags: [ 视频, 学习 ]
   icon: bilibili
   featured: true
   riskLevel: standard
   reviewStatus: verified
-  linkStatus: unchecked
+  linkStatus: verified
   source: { kind: manual }
 - id: microsoft
   name: 微软官网
   url: https://www.microsoft.com/zh-cn/
   description: Microsoft 产品与服务官网
   category: common
-  tags: [官方, 软件]
+  tags: [ 官方, 软件 ]
   icon: microsoft
   featured: true
   riskLevel: standard
   reviewStatus: verified
-  linkStatus: unchecked
+  linkStatus: verified
   source: { kind: manual }

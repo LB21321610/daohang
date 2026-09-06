@@ -27,12 +27,12 @@
 > “这个网站我昨天还用过，到底放哪了？”<br>
 > —— 每个打开了 37 个标签页的人 😵‍💫
 
-这是一个静态、轻量、可配置的个人导航站。它把常用网站、AI 工具、软件资源，以及游戏、视频与影视目录整理到同一个页面里，让浏览器收藏夹暂时停止自由生长。🌱
+这是一个静态、轻量、可配置的个人导航站。它把常用网站、AI 工具、软件资源，以及游戏、音频、视频与影视目录整理到同一个页面里，让浏览器收藏夹暂时停止自由生长。🌱
 
 ### ✨ 它会什么
 
-- 🔎 **全局搜索**：按名称、描述、分类或标签快速找站点
-- 🗂️ **清晰分类**：常用、AI、软件、游戏、视频、影视，各回各家
+- 🔎 **全局搜索**：按名称、别名、描述、分类或标签快速找站点
+- 🗂️ **清晰分类**：常用、AI、软件、游戏、音频、视频、影视，各回各家
 - ⭐ **本地收藏**：收藏保存在浏览器里，刷新也不会失忆
 - 🧩 **YAML 配置**：新增网站不用进组件里考古
 - ⚠️ **风险提醒**：高风险资源始终显示警告，首次打开链接前需要确认
@@ -68,6 +68,7 @@ content/
     ├── mac.yml
     ├── cross-platform.yml
     ├── games.yml
+    ├── audio.yml
     ├── video.yml
     └── media.yml
 ```
@@ -80,7 +81,25 @@ npm run content:build
 
 生成器会检查 HTTPS、重复 ID、重复网址、分类与分组引用、字段格式，然后生成前端使用的数据。写错了就立刻报错，不让坏配置悄悄混进页面。🕵️
 
-有些条目会因站点关闭、域名变更或清单原链接不可靠而暂无稳定网址。它们仍保留在目录中便于识别和搜索，但会显示为不可点击的“暂无稳定链接”，不会用未确认的替代域名凑数。
+确认关闭、域名出售、内容不符且找不到正确入口的条目会被删除；同一站点迁移时更新网址并保留 ID。当前目录已清除“暂无稳定链接”占位记录。反爬、地区限制或访问验证导致无法确认的链接保留为 `unchecked`，页面显示“待核验”；核对实际页面与条目相符后才设为 `verified`。链接可达性 `linkStatus` 与内容风险审核 `reviewStatus` 分开维护：可打开不代表内容已通过安全审核。
+
+### 🎵 音频资源
+
+`content/sites/audio.yml` 收录附件中的 **130 条产品记录**，按主要用途分为八组：DAW 与 DJ、插件套装、虚拟乐器与采样器、混音与母带、人声处理与修复、混响与创意效果、吉他与贝斯、鼓与节奏。音频入口位于视频之前，首页仍沿用原有分组。品牌放在标签中，别名也能搜索。
+
+描述中的“清单版本”来自导入清单，是版本快照；不代表外站当前最新版，也不保证该版本仍可下载。套装按一条记录计算，单品各自保留。Logic Pro 使用官方 Mac App Store 页面；5 个已下架的详情页改用对应产品官网。KOMPLETE FX Bundle 的详情页保留了历史 XLN Audio URL，但已核对页面标题、开发者和版本确实对应 KOMPLETE FX。
+
+### 🔗 全量链接检查
+
+```bash
+npm run links:check
+# 需要保存机器可读结果时（日志中不含抓取正文）
+npm run --silent links:check -- --json > links-check.json
+```
+
+检查器限速 GET 请求，检查 HTTPS、重定向、标题和有限正文，失败时重试一次；输出最终地址、状态和异常原因。HTTP 200 也可能是出售域名、软 404、空页或验证页，`reachable` 仅表示机器读到了页面，仍需人工核对内容。异常条目结合浏览器复核后处理，不能凭一次错误直接删除。命令不会改写 YAML，也不接入 `npm run check` 或发布流程，避免外站波动影响部署。
+
+最近全量核验：**2026-09-06**。检查原有 140 条及附件 130 条：删除旧记录 34 条，更新或补回旧链接 35 条（30 条更新、5 条恢复），新增音频 130 条，最终共 **236 条**。其中 **226 条已核验、10 条待核验**；待核验条目不计入“已确认可打开”。此记录是核验当日的结果，不保证外站持续在线。
 
 ### 🥕 Carrot 数据导入
 
@@ -103,12 +122,12 @@ npm run content:import-carrot
 > “I used that website yesterday. Where did it go?”<br>
 > — Everyone with 37 tabs open 😵‍💫
 
-Personal Navigation is a lightweight, static, and configurable directory for everyday websites, AI tools, software resources, and curated game, video, and film/TV catalogs. It gives your bookmarks a home before they evolve into their own ecosystem. 🌱
+Personal Navigation is a lightweight, static, and configurable directory for everyday websites, AI tools, software resources, and curated game, audio, video, and film/TV catalogs. It gives your bookmarks a home before they evolve into their own ecosystem. 🌱
 
 ### ✨ What it does
 
-- 🔎 **Global search** across names, descriptions, categories, and tags
-- 🗂️ **Clear categories** for everyday sites, AI, software, games, video tools, and film/TV resources
+- 🔎 **Global search** across names, aliases, descriptions, categories, and tags
+- 🗂️ **Clear categories** for everyday sites, AI, software, games, audio, video tools, and film/TV resources
 - ⭐ **Local favorites** that survive page reloads in the same browser
 - 🧩 **YAML-powered content** so adding a site does not require component archaeology
 - ⚠️ **Risk-aware links** with permanent warnings and first-visit confirmation for high-risk entries
@@ -140,7 +159,25 @@ npm run content:build
 
 The generator validates HTTPS URLs, duplicate IDs and URLs, category and section references, and field formats before producing the data consumed by the frontend. Bad configuration gets stopped at the door. 🚧
 
-Some entries have no stable URL because a site closed, its domain changes frequently, or the original catalog link was unreliable. They remain searchable for reference, but appear as disabled “No stable link” rows instead of pointing visitors at an unverified replacement domain.
+Remove entries confirmed closed, parked for sale, or unrelated when no correct destination can be found. Update a migrated site’s URL while keeping its ID. The current catalog contains no “No stable link” placeholders. Keep links blocked by anti-bot checks, regional restrictions, or access verification as `unchecked`, displayed as “待核验” (pending verification). Use `verified` only after checking that the actual page matches the entry. Reachability (`linkStatus`) and content risk review (`reviewStatus`) are independent; a working link is not a safety endorsement.
+
+### 🎵 Audio resources
+
+`content/sites/audio.yml` contains **130 product records** from the supplied list, organized into eight sections: DAW and DJ; plugin bundles; virtual instruments and samplers; mixing and mastering; vocals and restoration; reverb and creative effects; guitar and bass; drums and rhythm. Audio appears before Video in navigation, with the existing home groups preserved. Brands are tags, and product aliases are searchable.
+
+“清单版本” in descriptions means the version from the supplied list, not a claim about the latest release or continued download availability. Bundles count as one record, and individual products remain separate. Logic Pro uses its official Mac App Store page; five removed detail pages use the corresponding official product pages. KOMPLETE FX Bundle retains a historical XLN Audio URL, but its current page title, developer, and version were checked against KOMPLETE FX.
+
+### 🔗 Checking all links
+
+```bash
+npm run links:check
+# Optional machine-readable output (without scraped page bodies)
+npm run --silent links:check -- --json > links-check.json
+```
+
+The checker rate-limits GET requests, inspects HTTPS, redirects, titles, and a bounded body sample, and retries failures once. Results include the final URL, status, and reason. HTTP 200 can still mean a parked domain, soft 404, blank page, or browser challenge. `reachable` means machine-readable content was returned and still needs human review. Recheck abnormal results in a browser before changing the catalog. The command never rewrites YAML and stays outside `npm run check` and deployment tests so external outages cannot break a release.
+
+Latest full audit: **2026-09-06**. Reviewed the original 140 records and 130 supplied products: removed 34 old records, updated or restored 35 old links (30 updates and 5 restorations), and added 130 audio records, leaving **236 total**. **226 are verified and 10 await verification**; pending entries are excluded from the confirmed-working count. These are findings from the audit date, not a guarantee of future uptime.
 
 ### 🥕 Importing Carrot data
 
@@ -157,6 +194,11 @@ Imported entries are review candidates only and are never published automaticall
 This project only indexes public URLs. It does not store, upload, or distribute third-party files, and it makes no guarantee about the legality, safety, accuracy, or availability of external websites. Before accessing or using third-party content, check the laws, software licenses, and copyright requirements that apply to you. You assume the risks associated with visiting those sites.
 
 ---
+
+## Contributors / 贡献者
+
+- [LB21321610](https://github.com/LB21321610) — 项目维护者 / Project maintainer
+- **OpenAI Codex（AI 协作 / AI collaboration）** — 链接复核、音频目录整理、代码与测试、文档维护 / Link review, audio catalog, implementation, tests, and documentation
 
 ## 📄 License
 

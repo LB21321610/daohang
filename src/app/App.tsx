@@ -14,6 +14,7 @@ import {
   House,
   Info,
   MagnifyingGlass,
+  MusicNotes,
   Newspaper,
   NotionLogo,
   OpenAiLogo,
@@ -74,6 +75,7 @@ const navIconById: Record<CategoryId, Icon> = {
   mac: AppleLogo,
   "cross-platform": SquaresFour,
   games: GameController,
+  audio: MusicNotes,
   video: FilmStrip,
   media: Newspaper,
 };
@@ -226,10 +228,18 @@ function SiteRow({
   }
 
   const gated = site.riskLevel === "high" && !riskAcknowledged;
+  const verificationLabel = site.linkStatus === "unchecked" ? "，待核验" : "";
   const contents = (
     <>
       <SiteIcon site={site} />
-      <span className="site-name">{site.name}</span>
+      <span className="site-title">
+        <span className="site-name">{site.name}</span>
+        {site.linkStatus === "unchecked" ? (
+          <span aria-hidden="true" className="site-link-status">
+            待核验
+          </span>
+        ) : null}
+      </span>
       <span className="site-description">{site.description}</span>
     </>
   );
@@ -238,7 +248,7 @@ function SiteRow({
     <article className="site-row">
       {gated ? (
         <button
-          aria-label={`${site.name}，${site.description}`}
+          aria-label={`${site.name}，${site.description}${verificationLabel}`}
           className="site-link site-link-button"
           onAuxClick={(event) => {
             if (event.button === 1) onRiskClick(event, site);
@@ -251,7 +261,7 @@ function SiteRow({
         </button>
       ) : (
         <a
-          aria-label={`${site.name}，${site.description}`}
+          aria-label={`${site.name}，${site.description}${verificationLabel}`}
           className="site-link"
           href={site.url}
           rel="noopener noreferrer nofollow"
