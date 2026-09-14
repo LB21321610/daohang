@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧭 个人导航 / Personal Navigation
+# 🧭 kx导航站 / Personal Navigation
 
 **把散落在收藏夹、聊天记录和“我明明见过这个网站”的记忆碎片，收进安静的一页。**<br>
 **One calm page for all the sites you swear you bookmarked somewhere.**
@@ -209,6 +209,6 @@ Released under the [MIT License](LICENSE). Use it, remix it, make it yours — j
 **少开一个标签页，多留一点内存。🧠✨**<br>
 **One fewer tab, one happier browser.**
 
-[⬆️ 回到顶部 / Back to top](#-个人导航--personal-navigation)
+[⬆️ 回到顶部 / Back to top](#-kx导航站--personal-navigation)
 
 </div>

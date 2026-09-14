@@ -27,7 +27,15 @@ import {
   X,
   type Icon,
 } from "@phosphor-icons/react";
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 
 import generatedCatalog from "../generated/sites.json";
 import { searchSites } from "../domain/search";
@@ -35,11 +43,13 @@ import type { CategoryId, LinkedSite, Site, SiteCatalog } from "../domain/site";
 import { readFavoriteIds, toggleFavorite } from "../features/favorites/favoriteStore";
 
 const RISK_ACKNOWLEDGEMENT_KEY = "personal-nav:risk-ack:v1";
+const MOTION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 const DISCLAIMER =
   "本站仅提供公开网址索引，不存储、上传或分发第三方文件，也不对外部站点的合法性、安全性、准确性或可用性作保证。访问和使用第三方内容前，请自行确认所在地法律、软件许可及版权要求；由此产生的风险由访问者自行承担。";
 
 type ViewId = "home" | CategoryId;
 type ModalState = { kind: "disclaimer" } | { kind: "risk"; site: LinkedSite } | null;
+type ContentMode = "browse" | "search-empty" | "search-results";
 
 interface AppProps {
   catalog?: SiteCatalog;
@@ -88,6 +98,10 @@ function getRiskAcknowledgement(): boolean {
   return typeof window !== "undefined" && window.sessionStorage.getItem(RISK_ACKNOWLEDGEMENT_KEY) === "true";
 }
 
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function SiteIcon({ site }: { site: Site }) {
   const SiteIconComponent = iconByName[site.icon ?? ""] ?? Globe;
 
@@ -99,21 +113,30 @@ function SiteIcon({ site }: { site: Site }) {
 }
 
 function Modal({
+  isClosing,
   state,
   onClose,
   onContinue,
+  onExited,
 }: {
+  isClosing: boolean;
   state: Exclude<ModalState, null>;
   onClose: () => void;
   onContinue: (site: LinkedSite) => void;
+  onExited: () => void;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const previousFocusKeyRef = useRef<string | null>(null);
   const isRisk = state.kind === "risk";
+  const requestClose = () => {
+    if (!isClosing) onClose();
+  };
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    previousFocusKeyRef.current = previousFocusRef.current?.dataset.focusKey ?? null;
     const background = [
       document.querySelector<HTMLElement>(".sidebar"),
       document.querySelector<HTMLElement>(".content-shell"),
@@ -148,12 +171,35 @@ function Modal({
       background.forEach((element, index) => {
         element.inert = previousInertValues[index] ?? false;
       });
-      previousFocusRef.current?.focus();
+      const previousFocus = previousFocusRef.current;
+      if (previousFocus?.isConnected) {
+        previousFocus.focus();
+        return;
+      }
+
+      const previousFocusKey = previousFocusKeyRef.current;
+      if (!previousFocusKey) return;
+      const replacement = [...document.querySelectorAll<HTMLElement>("[data-focus-key]")].find(
+        (element) => element.dataset.focusKey === previousFocusKey,
+      );
+      replacement?.focus();
     };
   }, [onClose]);
 
+  useEffect(() => {
+    if (!isClosing) return;
+    const exitFallback = window.setTimeout(onExited, 200);
+    return () => window.clearTimeout(exitFallback);
+  }, [isClosing, onExited]);
+
   return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
+    <div
+      className={`modal-backdrop ${isClosing ? "is-closing" : ""}`}
+      onAnimationEnd={(event) => {
+        if (isClosing && event.target === event.currentTarget) onExited();
+      }}
+      onMouseDown={requestClose}
+    >
       <div
         aria-describedby="modal-description"
         aria-labelledby="modal-title"
@@ -166,7 +212,7 @@ function Modal({
         <div className={`modal-icon ${isRisk ? "modal-icon--warning" : ""}`} aria-hidden="true">
           {isRisk ? <ShieldWarning size={24} weight="duotone" /> : <Info size={24} weight="duotone" />}
         </div>
-        <button className="modal-close" onClick={onClose} ref={closeButtonRef} type="button">
+        <button className="modal-close" onClick={requestClose} ref={closeButtonRef} type="button">
           <X size={18} />
           <span className="sr-only">关闭</span>
         </button>
@@ -182,11 +228,17 @@ function Modal({
           )}
         </div>
         <div className="modal-actions">
-          <button className="button button--secondary" onClick={onClose} type="button">
+          <button className="button button--secondary" onClick={requestClose} type="button">
             {isRisk ? "取消" : "知道了"}
           </button>
           {isRisk ? (
-            <button className="button button--primary" onClick={() => onContinue(state.site)} type="button">
+            <button
+              className="button button--primary"
+              onClick={() => {
+                if (!isClosing) onContinue(state.site);
+              }}
+              type="button"
+            >
               继续访问
             </button>
           ) : null}
@@ -247,9 +299,10 @@ function SiteRow({
   return (
     <article className="site-row">
       {gated ? (
-        <button
-          aria-label={`${site.name}，${site.description}${verificationLabel}`}
-          className="site-link site-link-button"
+          <button
+            aria-label={`${site.name}，${site.description}${verificationLabel}`}
+            className="site-link site-link-button"
+            data-focus-key={`site-link:${site.id}`}
           onAuxClick={(event) => {
             if (event.button === 1) onRiskClick(event, site);
           }}
@@ -260,9 +313,10 @@ function SiteRow({
           {contents}
         </button>
       ) : (
-        <a
-          aria-label={`${site.name}，${site.description}${verificationLabel}`}
-          className="site-link"
+          <a
+            aria-label={`${site.name}，${site.description}${verificationLabel}`}
+            className="site-link"
+            data-focus-key={`site-link:${site.id}`}
           href={site.url}
           rel="noopener noreferrer nofollow"
           target="_blank"
@@ -273,11 +327,14 @@ function SiteRow({
       <button
         aria-label={`${isFavorite ? "取消收藏" : "收藏"} ${site.name}`}
         className={`favorite-button ${isFavorite ? "is-favorite" : ""}`}
+        data-favorite-site-id={site.id}
         onClick={() => onFavorite(site.id)}
         type="button"
       >
-        <Star size={20} weight={isFavorite ? "fill" : "regular"} />
-        <span>{isFavorite ? "已收藏" : "收藏"}</span>
+        <span aria-hidden="true" className="favorite-icon">
+          <Star size={20} weight={isFavorite ? "fill" : "regular"} />
+        </span>
+        <span className="favorite-label">{isFavorite ? "已收藏" : "收藏"}</span>
       </button>
     </article>
   );
@@ -328,10 +385,35 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const [activeView, setActiveView] = useState<ViewId>("home");
   const [favoriteIds, setFavoriteIds] = useState<string[]>(getStoredFavorites);
   const [modal, setModal] = useState<ModalState>(null);
+  const [isModalClosing, setIsModalClosing] = useState(false);
   const [query, setQuery] = useState("");
   const [riskAcknowledged, setRiskAcknowledged] = useState(getRiskAcknowledgement);
+  const navRef = useRef<HTMLElement>(null);
+  const navButtonRefs = useRef(new Map<ViewId, HTMLButtonElement>());
+  const contentRef = useRef<HTMLElement>(null);
+  const contentAnimationRef = useRef<Animation | null>(null);
+  const favoriteAnimationRef = useRef<Animation | null>(null);
+  const pendingFavoriteIdRef = useRef<string | null>(null);
+  const modalActionHandledRef = useRef(false);
+  const previousContentStateRef = useRef<{ mode: ContentMode; view: ViewId } | null>(null);
 
-  const closeModal = useCallback(() => setModal(null), []);
+  const closeModal = useCallback(() => {
+    if (prefersReducedMotion()) {
+      setModal(null);
+      setIsModalClosing(false);
+      return;
+    }
+    setIsModalClosing(true);
+  }, []);
+  const finishModalClose = useCallback(() => {
+    setModal(null);
+    setIsModalClosing(false);
+  }, []);
+  const openModal = useCallback((nextModal: Exclude<ModalState, null>) => {
+    modalActionHandledRef.current = false;
+    setIsModalClosing(false);
+    setModal(nextModal);
+  }, []);
 
   const categoryById = useMemo(
     () => new Map(catalog.categories.map((category) => [category.id, category])),
@@ -417,19 +499,48 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   }, [activeView, catalog.categories, catalog.sites, categoryById, favoriteIds, query]);
 
   const handleFavorite = (siteId: string) => {
+    pendingFavoriteIdRef.current = siteId;
     setFavoriteIds(toggleFavorite(window.localStorage, siteId));
   };
 
+  useLayoutEffect(() => {
+    const siteId = pendingFavoriteIdRef.current;
+    if (!siteId) return;
+    pendingFavoriteIdRef.current = null;
+
+    const favoriteButton = [...document.querySelectorAll<HTMLButtonElement>("[data-favorite-site-id]")].find(
+      (button) => button.dataset.favoriteSiteId === siteId,
+    );
+    const focusTarget = favoriteButton ?? navButtonRefs.current.get(activeView);
+    focusTarget?.focus({ preventScroll: true });
+
+    const icon = favoriteButton?.querySelector<HTMLElement>(".favorite-icon");
+    favoriteAnimationRef.current?.cancel();
+    favoriteAnimationRef.current = null;
+    if (!icon || typeof icon.animate !== "function" || prefersReducedMotion()) return;
+
+    favoriteAnimationRef.current = icon.animate(
+      [
+        { transform: "scale(1)" },
+        { offset: 0.45, transform: "scale(1.08)" },
+        { transform: "scale(1)" },
+      ],
+      { duration: 220, easing: MOTION_EASING },
+    );
+  }, [activeView, favoriteIds]);
+
   const handleRiskClick = (event: MouseEvent<HTMLElement>, site: LinkedSite) => {
     event.preventDefault();
-    setModal({ kind: "risk", site });
+    openModal({ kind: "risk", site });
   };
 
   const handleContinue = (site: LinkedSite) => {
+    if (modalActionHandledRef.current) return;
+    modalActionHandledRef.current = true;
     window.sessionStorage.setItem(RISK_ACKNOWLEDGEMENT_KEY, "true");
     setRiskAcknowledged(true);
-    setModal(null);
     window.open(site.url, "_blank", "noopener,noreferrer");
+    closeModal();
   };
 
   const navItems = [...catalog.categories]
@@ -439,6 +550,84 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
       id: category.id === "common" ? ("home" as const) : category.id,
       label: category.navLabel,
     }));
+  const contentMode: ContentMode = query.trim()
+    ? sections[0]?.sites.length
+      ? "search-results"
+      : "search-empty"
+    : "browse";
+
+  useLayoutEffect(() => {
+    const currentState = { mode: contentMode, view: activeView };
+    const previousState = previousContentStateRef.current;
+    previousContentStateRef.current = currentState;
+    if (!previousState) return;
+
+    const categoryChanged = previousState.view !== activeView;
+    const searchStateChanged = previousState.mode !== contentMode;
+    if (!categoryChanged && !searchStateChanged) return;
+
+    contentAnimationRef.current?.cancel();
+    contentAnimationRef.current = null;
+    if (prefersReducedMotion()) return;
+
+    const content = contentRef.current;
+    if (!content || typeof content.animate !== "function") return;
+
+    const isCategoryTransition = categoryChanged && contentMode === "browse";
+    contentAnimationRef.current = content.animate(
+      isCategoryTransition
+        ? [
+            { opacity: 0.86, transform: "translateY(4px)" },
+            { opacity: 1, transform: "translateY(0)" },
+          ]
+        : [{ opacity: 0.86 }, { opacity: 1 }],
+      {
+        duration: isCategoryTransition ? 240 : 200,
+        easing: MOTION_EASING,
+      },
+    );
+  }, [activeView, contentMode]);
+
+  useEffect(() => {
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleReducedMotionChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) return;
+      contentAnimationRef.current?.cancel();
+      contentAnimationRef.current = null;
+      favoriteAnimationRef.current?.cancel();
+      favoriteAnimationRef.current = null;
+    };
+
+    reducedMotionQuery.addEventListener("change", handleReducedMotionChange);
+    return () => reducedMotionQuery.removeEventListener("change", handleReducedMotionChange);
+  }, []);
+
+  useEffect(
+    () => () => {
+      contentAnimationRef.current?.cancel();
+      favoriteAnimationRef.current?.cancel();
+    },
+    [],
+  );
+
+  const positionNavIndicator = useCallback(() => {
+    const navigation = navRef.current;
+    const activeButton = navButtonRefs.current.get(activeView);
+    if (!navigation || !activeButton) return;
+
+    navigation.style.setProperty("--nav-indicator-x", `${activeButton.offsetLeft}px`);
+    navigation.style.setProperty("--nav-indicator-y", `${activeButton.offsetTop}px`);
+    navigation.style.setProperty("--nav-indicator-width", `${activeButton.offsetWidth}px`);
+    navigation.style.setProperty("--nav-indicator-height", `${activeButton.offsetHeight}px`);
+    navigation.dataset.indicatorReady = "true";
+    navigation.dataset.indicatorVisible = query ? "false" : "true";
+  }, [activeView, query]);
+
+  useLayoutEffect(() => {
+    positionNavIndicator();
+    window.addEventListener("resize", positionNavIndicator);
+    return () => window.removeEventListener("resize", positionNavIndicator);
+  }, [positionNavIndicator]);
 
   return (
     <div className="app-shell">
@@ -447,10 +636,11 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
           <span className="brand-mark" aria-hidden="true">
             <Compass size={21} weight="fill" />
           </span>
-          <span>个人导航</span>
+          <span>kx导航站</span>
         </div>
 
-        <nav aria-label="网站分类" className="sidebar-nav">
+        <nav aria-label="网站分类" className="sidebar-nav" ref={navRef}>
+          <span aria-hidden="true" className="nav-indicator" data-testid="nav-indicator" />
           {navItems.map((item) => {
             const NavIcon = navIconById[item.categoryId];
             const isActive = activeView === item.id && !query;
@@ -463,6 +653,10 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
                   setActiveView(item.id);
                   setQuery("");
                 }}
+                ref={(element) => {
+                  if (element) navButtonRefs.current.set(item.id, element);
+                  else navButtonRefs.current.delete(item.id);
+                }}
                 type="button"
               >
                 <NavIcon size={23} weight={isActive ? "fill" : "regular"} />
@@ -472,7 +666,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
           })}
         </nav>
 
-        <button className="disclaimer-button" onClick={() => setModal({ kind: "disclaimer" })} type="button">
+        <button className="disclaimer-button" onClick={() => openModal({ kind: "disclaimer" })} type="button">
           <ShieldWarning size={18} />
           免责声明
         </button>
@@ -492,7 +686,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
           </label>
         </header>
 
-        <main className="main-content">
+        <main className="main-content" data-testid="content-stage" ref={contentRef}>
           {query.trim() && sections[0]?.sites.length === 0 ? (
             <div className="empty-state">
               <MagnifyingGlass size={32} />
@@ -504,7 +698,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
               <SiteSection
                 favoriteIds={favoriteIds}
                 key={section.id}
-                onDisclaimer={() => setModal({ kind: "disclaimer" })}
+                onDisclaimer={() => openModal({ kind: "disclaimer" })}
                 onFavorite={handleFavorite}
                 onRiskClick={handleRiskClick}
                 riskAcknowledged={riskAcknowledged}
@@ -515,7 +709,15 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
         </main>
       </div>
 
-      {modal ? <Modal onClose={closeModal} onContinue={handleContinue} state={modal} /> : null}
+      {modal ? (
+        <Modal
+          isClosing={isModalClosing}
+          onClose={closeModal}
+          onContinue={handleContinue}
+          onExited={finishModalClose}
+          state={modal}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "../../src/app/App";
 import type { SiteCatalog } from "../../src/domain/site";
@@ -239,6 +239,28 @@ describe("App", () => {
     vi.restoreAllMocks();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("renders kx导航站 as the brand name", () => {
+    render(<App catalog={catalog} />);
+
+    expect(screen.getByText("kx导航站", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText("个人导航", { exact: true })).not.toBeInTheDocument();
+  });
+
+  it("uses one persistent indicator for the active category", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    const indicator = screen.getByTestId("nav-indicator");
+    await user.click(screen.getByRole("button", { name: "AI" }));
+
+    expect(screen.getByTestId("nav-indicator")).toBe(indicator);
+    expect(screen.getByRole("button", { name: "AI" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("renders the home groups and filters by category", async () => {
     const user = userEvent.setup();
     render(<App catalog={catalog} />);
@@ -337,6 +359,142 @@ describe("App", () => {
     expect(open).not.toHaveBeenCalled();
   });
 
+  it("moves focus and favorite feedback to a row after home regrouping", async () => {
+    const user = userEvent.setup();
+    const animate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
+    const originalAnimate = HTMLElement.prototype.animate;
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: animate,
+      writable: true,
+    });
+
+    try {
+      render(<App catalog={catalog} />);
+
+      await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
+
+      const relocatedButton = screen.getByRole("button", { name: "取消收藏 GitHub" });
+      expect(relocatedButton).toHaveFocus();
+      expect(animate).toHaveBeenCalledTimes(1);
+      expect(animate.mock.contexts[0]).toBe(relocatedButton.querySelector(".favorite-icon"));
+    } finally {
+      if (originalAnimate) {
+        Object.defineProperty(HTMLElement.prototype, "animate", {
+          configurable: true,
+          value: originalAnimate,
+          writable: true,
+        });
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "animate");
+      }
+    }
+  });
+
+  it("moves focus to the active category when an unfavorited hidden-home site disappears", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "音频" }));
+    await user.click(screen.getByRole("button", { name: "收藏 Ableton Live 12 Suite" }));
+    await user.click(screen.getByRole("button", { name: "常用" }));
+    await user.click(screen.getByRole("button", { name: "取消收藏 Ableton Live 12 Suite" }));
+
+    expect(screen.queryByRole("button", { name: /Ableton Live 12 Suite/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "常用" })).toHaveFocus();
+  });
+
+  it("replaces category motion with the latest navigation and does not replay the active category", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+    const content = screen.getByTestId("content-stage");
+    const firstCancel = vi.fn();
+    const secondCancel = vi.fn();
+    const animate = vi
+      .fn()
+      .mockReturnValueOnce({ cancel: firstCancel } as unknown as Animation)
+      .mockReturnValueOnce({ cancel: secondCancel } as unknown as Animation);
+    Object.defineProperty(content, "animate", { configurable: true, value: animate });
+
+    await user.click(screen.getByRole("button", { name: "AI" }));
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+
+    expect(firstCancel).toHaveBeenCalledTimes(1);
+    expect(animate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("button", { name: "游戏" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("heading", { name: "游戏商店" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+    expect(animate).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps one search result section mounted and only fades when the search state changes", () => {
+    render(<App catalog={catalog} />);
+    const content = screen.getByTestId("content-stage");
+    const animate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
+    Object.defineProperty(content, "animate", { configurable: true, value: animate });
+    const input = screen.getByPlaceholderText("搜索网站、分类或标签");
+    input.focus();
+
+    fireEvent.change(input, { target: { value: "g" } });
+    const resultSection = screen.getByRole("region", { name: "搜索结果" });
+    expect(animate).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(input, { target: { value: "gi" } });
+    expect(screen.getByRole("region", { name: "搜索结果" })).toBe(resultSection);
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(input).toHaveFocus();
+
+    fireEvent.change(input, { target: { value: "不存在的导航条目" } });
+    expect(screen.getByRole("heading", { name: "没有找到匹配的网站" })).toBeInTheDocument();
+    expect(animate).toHaveBeenCalledTimes(2);
+
+    fireEvent.change(input, { target: { value: "游戏工具" } });
+    expect(screen.getByRole("group", { name: /Legacy Game Tool/ })).toBeInTheDocument();
+    expect(animate).toHaveBeenCalledTimes(3);
+    expect(input).toHaveFocus();
+  });
+
+  it("cancels active native motion when reduced motion is enabled at runtime", async () => {
+    let reduceMotion = false;
+    let onPreferenceChange: ((event: MediaQueryListEvent) => void) | undefined;
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (query) =>
+        ({
+          addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+            onPreferenceChange = listener as (event: MediaQueryListEvent) => void;
+          },
+          addListener: () => undefined,
+          dispatchEvent: () => false,
+          get matches() {
+            return reduceMotion;
+          },
+          media: query,
+          onchange: null,
+          removeEventListener: () => undefined,
+          removeListener: () => undefined,
+        }) as MediaQueryList,
+    );
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+    const content = screen.getByTestId("content-stage");
+    const cancel = vi.fn();
+    const animate = vi.fn(() => ({ cancel }) as unknown as Animation);
+    Object.defineProperty(content, "animate", { configurable: true, value: animate });
+
+    await user.click(screen.getByRole("button", { name: "AI" }));
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(onPreferenceChange).toBeTypeOf("function");
+
+    reduceMotion = true;
+    act(() => onPreferenceChange?.({ matches: true } as MediaQueryListEvent));
+    expect(cancel).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("heading", { name: "游戏商店" })).toBeInTheDocument();
+  });
+
   it("opens the full disclaimer from the sidebar", async () => {
     const user = userEvent.setup();
     render(<App catalog={catalog} />);
@@ -360,14 +518,29 @@ describe("App", () => {
     expect(firstDialog).toBeInTheDocument();
     expect(within(firstDialog).getByText(/本站仅提供公开网址索引/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "取消" }));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
     expect(open).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(200));
+    vi.useRealTimers();
 
     await user.click(screen.getByRole("link", { name: /AppNee/ }));
-    await user.click(screen.getByRole("button", { name: "继续访问" }));
+    const continueButton = screen.getByRole("button", { name: "继续访问" });
+    vi.useFakeTimers();
+    fireEvent.click(continueButton);
+    fireEvent.click(continueButton);
 
     expect(open).toHaveBeenCalledWith("https://appnee.com/", "_blank", "noopener,noreferrer");
+    expect(open).toHaveBeenCalledTimes(1);
     expect(sessionStorage.getItem("personal-nav:risk-ack:v1")).toBe("true");
+    const closingDialog = screen.getByRole("dialog", { name: "访问外部站点" });
+    const closingBackdrop = closingDialog.parentElement;
+    expect(closingBackdrop).toHaveClass("is-closing");
+
+    act(() => vi.advanceTimersByTime(199));
+    expect(closingDialog).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    vi.useRealTimers();
 
     const acknowledgedLink = screen.getByRole("link", { name: /AppNee/ });
     expect(acknowledgedLink).toHaveAttribute("href", "https://appnee.com/");
@@ -416,7 +589,47 @@ describe("App", () => {
     await user.tab();
     expect(close).toHaveFocus();
 
-    await user.click(acknowledge);
+    vi.useFakeTimers();
+    fireEvent.click(acknowledge);
+    const backdrop = dialog.parentElement as HTMLElement;
+    expect(dialog).toBeInTheDocument();
+    expect(backdrop).toHaveClass("is-closing");
+    expect(document.querySelector<HTMLElement>(".sidebar")?.inert).toBe(true);
+    expect(document.querySelector<HTMLElement>(".content-shell")?.inert).toBe(true);
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(dialog).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(199));
+    expect(dialog).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    vi.useRealTimers();
+    expect(screen.queryByRole("dialog", { name: "免责声明" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it("skips the modal exit hold when reduced motion is requested", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (query) =>
+        ({
+          addEventListener: () => undefined,
+          addListener: () => undefined,
+          dispatchEvent: () => false,
+          matches: query === "(prefers-reduced-motion: reduce)",
+          media: query,
+          onchange: null,
+          removeEventListener: () => undefined,
+          removeListener: () => undefined,
+        }) as MediaQueryList,
+    );
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "免责声明" }));
+    await user.click(screen.getByRole("button", { name: "知道了" }));
+
+    expect(screen.queryByRole("dialog", { name: "免责声明" })).not.toBeInTheDocument();
   });
 });
