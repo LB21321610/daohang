@@ -31,8 +31,12 @@ jobs:
       # New advisories should surface as warnings without blocking an unchanged deploy.
       - run: npm run audit:high
         continue-on-error: true
+      # base_path is "/<repo>" for a project site and empty for a user site or custom domain.
+      - id: pages
+        uses: actions/configure-pages@v5
       - run: npm run check:ci
-      - uses: actions/configure-pages@v5
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/client

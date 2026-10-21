@@ -4,13 +4,65 @@ function normalize(value: string): string {
   return value.trim().toLocaleLowerCase("zh-CN");
 }
 
-function scoreField(value: string, query: string, exact: number, prefix: number, contains: number): number {
-  const normalized = normalize(value);
+interface SearchField {
+  value: string;
+  exact: number;
+  prefix: number;
+  contains: number;
+}
 
-  if (normalized === query) return exact;
-  if (normalized.startsWith(query)) return prefix;
-  if (normalized.includes(query)) return contains;
+interface SearchIndex {
+  categories: Category[];
+  entries: Array<{ fields: SearchField[]; site: Site }>;
+}
+
+function field(value: string, exact: number, prefix: number, contains: number): SearchField {
+  return { value: normalize(value), exact, prefix, contains };
+}
+
+function scoreField({ value, exact, prefix, contains }: SearchField, query: string): number {
+  if (value === query) return exact;
+  if (value.startsWith(query)) return prefix;
+  if (value.includes(query)) return contains;
   return 0;
+}
+
+// Normalizing ~1,600 sites' fields is the costly part of a search, so it happens once per catalog.
+const searchIndexes = new WeakMap<Site[], SearchIndex>();
+
+function getSearchIndex(sites: Site[], categories: Category[]): SearchIndex {
+  const cached = searchIndexes.get(sites);
+  if (cached?.categories === categories) return cached;
+
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
+  const sectionLabels = new Map(
+    categories.flatMap((category) =>
+      (category.sections ?? []).map((section) => [`${category.id}/${section.id}`, section.label] as const),
+    ),
+  );
+  const index: SearchIndex = {
+    categories,
+    entries: sites.map((site) => {
+      const category = categoryById.get(site.category);
+      const sectionLabel = site.section ? sectionLabels.get(`${site.category}/${site.section}`) : undefined;
+      return {
+        site,
+        fields: [
+          field(site.name, 120, 105, 80),
+          ...(site.linkStatus === "unavailable" ? [] : [field(site.domain, 115, 100, 76)]),
+          ...(site.aliases ?? []).map((alias) => field(alias, 110, 95, 72)),
+          field(site.description, 70, 64, 52),
+          ...site.tags.map((tag) => field(tag, 86, 78, 58)),
+          ...(sectionLabel ? [field(sectionLabel, 88, 80, 59)] : []),
+          ...(category
+            ? [category.label, category.navLabel, category.homeLabel].map((label) => field(label, 90, 82, 60))
+            : []),
+        ],
+      };
+    }),
+  };
+  searchIndexes.set(sites, index);
+  return index;
 }
 
 export interface HighlightSegment {
@@ -41,26 +93,10 @@ export function searchSites(sites: Site[], categories: Category[], rawQuery: str
   const query = normalize(rawQuery);
   if (!query) return sites;
 
-  const categoryById = new Map(categories.map((category) => [category.id, category]));
-
-  return sites
-    .map((site, index) => {
-      const category = categoryById.get(site.category);
-      const section = category?.sections?.find((candidate) => candidate.id === site.section);
-      const score = Math.max(
-        scoreField(site.name, query, 120, 105, 80),
-        ...(site.linkStatus === "unavailable" ? [] : [scoreField(site.domain, query, 115, 100, 76)]),
-        ...(site.aliases ?? []).map((alias) => scoreField(alias, query, 110, 95, 72)),
-        scoreField(site.description, query, 70, 64, 52),
-        ...site.tags.map((tag) => scoreField(tag, query, 86, 78, 58)),
-        ...(section ? [scoreField(section.label, query, 88, 80, 59)] : []),
-        ...(category
-          ? [category.label, category.navLabel, category.homeLabel].map((label) =>
-              scoreField(label, query, 90, 82, 60),
-            )
-          : []),
-      );
-
+  return getSearchIndex(sites, categories)
+    .entries.map(({ fields, site }, index) => {
+      let score = 0;
+      for (const searchField of fields) score = Math.max(score, scoreField(searchField, query));
       return { index, score, site };
     })
     .filter((result) => result.score > 0)

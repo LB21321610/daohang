@@ -1,7 +1,7 @@
-import { createServer, type RequestListener, type Server } from "node:http";
+import http, { createServer, type RequestListener, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   checkLink,
@@ -61,6 +61,48 @@ describe("probeUrl", () => {
     });
 
     expect(probe.errorKind).toBe("timeout");
+  });
+
+  it("settles when the next redirect hop throws synchronously", async () => {
+    const baseUrl = await listen((_request, response) => {
+      response.writeHead(302, { location: "/destination" }).end();
+    });
+    const originalGet = http.get;
+    let calls = 0;
+    const get = vi.spyOn(http, "get").mockImplementation(((...args: Parameters<typeof http.get>) => {
+      calls += 1;
+      if (calls === 2) throw Object.assign(new Error("bad target"), { code: "ERR_UNESCAPED_CHARACTERS" });
+      return originalGet(...args);
+    }) as typeof http.get);
+
+    try {
+      const probe = await probeUrl(`${baseUrl}/start`, { connectionTimeoutMs: 500, totalTimeoutMs: 1_000 });
+      expect(probe).toMatchObject({ errorKind: "network", errorMessage: "bad target" });
+    } finally {
+      get.mockRestore();
+    }
+  });
+
+  it("does not count throttle waits for a redirect hop against the total timeout", async () => {
+    const baseUrl = await listen((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { location: "/destination" }).end();
+        return;
+      }
+      response.end("<title>Destination</title>");
+    });
+    let hops = 0;
+
+    const probe = await probeUrl(`${baseUrl}/start`, {
+      beforeRequest: async () => {
+        hops += 1;
+        if (hops === 2) await new Promise((resolve) => setTimeout(resolve, 150));
+      },
+      connectionTimeoutMs: 500,
+      totalTimeoutMs: 100,
+    });
+
+    expect(probe).toMatchObject({ statusCode: 200, title: "Destination" });
   });
 
   it("stops reading after the body sample limit and records truncation", async () => {
@@ -131,6 +173,12 @@ describe("classifyProbe", () => {
   it.each([
     ["Buy this domain", "parked"],
     ["404 - Page Not Found", "soft_404"],
+    ["404 Not Found", "soft_404"],
+    ["Error 404 | Example", "soft_404"],
+    ["Example – 404", "soft_404"],
+    ["404 Media", "reachable"],
+    ["HTTP 404 explained for beginners", "reachable"],
+    ["HTTP 404 Not Found", "soft_404"],
     ["Just a moment...", "challenge"],
   ] as const)("classifies the title %s as %s", (title, status) => {
     expect(classifyProbe(successfulProbe({ title }))).toMatchObject({ status });
@@ -183,6 +231,13 @@ describe("classifyProbe", () => {
     );
 
     expect(result.status).toBe("review");
+  });
+
+  it.each([
+    ["a location comparison", "<title>App</title><script>if (window.location == top.location) boot()</script>"],
+    ["an event-handler attribute", '<title>App</title><button onclick="location.href=\'/login\'">Log in</button>'],
+  ])("does not mistake %s for script-driven navigation", (_label, bodySample) => {
+    expect(classifyProbe(successfulProbe({ bodySample })).status).toBe("reachable");
   });
 
   it("rejects an HTTPS request that finishes on HTTP", () => {

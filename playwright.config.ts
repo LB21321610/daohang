@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const repositoryName = process.env.GITHUB_REPOSITORY?.split("/")[1];
-const basePath = process.env.GITHUB_ACTIONS && repositoryName ? `/${repositoryName}/` : "/";
+// Must match the base vite.config.ts derives from BASE_PATH.
+const basePath = `/${(process.env.BASE_PATH ?? "").replace(/^\/+|\/+$/g, "")}/`.replace(/^\/\/$/, "/");
 const previewUrl = `http://127.0.0.1:4173${basePath}`;
 
 export default defineConfig({

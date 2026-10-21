@@ -699,6 +699,21 @@ describe("App", () => {
     scrollTo.mockRestore();
   });
 
+  it("scrolls back to the top when a search starts or its query changes", () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    render(<App catalog={catalog} />);
+    const input = screen.getByPlaceholderText("搜索网站、分类或标签");
+
+    fireEvent.change(input, { target: { value: "g" } });
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    fireEvent.change(input, { target: { value: "gi" } });
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+    fireEvent.change(input, { target: { value: "gi " } });
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
+    scrollTo.mockRestore();
+  });
+
   it("omits empty sections from the jump bar", async () => {
     const user = userEvent.setup();
     render(<App catalog={catalog} />);

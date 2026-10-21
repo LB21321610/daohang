@@ -162,6 +162,51 @@ describe("awesome-mac import", () => {
     expect(sites[4]?.description).toBe("awesome-mac 收录的 App Shopper");
   });
 
+  it("keeps IDs from the previous import so stored favourites stay on the same app", () => {
+    const entry = (name: string, url: string) => ({ name, url, description: "", section: "utilities", tags: ["实用工具"] });
+    const sites = buildAwesomeMacSites(
+      [
+        entry("Reeder", "https://new-reeder.example/"),
+        entry("Reeder", "https://reederapp.com/"),
+        entry("Typora", "https://typora.io/"),
+      ],
+      {
+        previousIds: [
+          ["https://reederapp.com/", "am-reeder"],
+          ["https://typora.io/", "am-typora-2"],
+          ["https://removed.example/", "am-old-app"],
+        ],
+      },
+    );
+
+    expect(sites.map((site) => [site.url, site.id])).toEqual([
+      ["https://new-reeder.example/", "am-reeder-2"],
+      ["https://reederapp.com/", "am-reeder"],
+      ["https://typora.io/", "am-typora-2"],
+    ]);
+  });
+
+  it("skips HTTP-only upstream links instead of guessing an HTTPS address", () => {
+    const warnings: string[] = [];
+    const entries = parseAwesomeMacMarkdown(
+      "<!--start-->\n## Utilities\n### Window Management\n* [Legacy](http://legacy.example/) - Old app.\n<!--end-->",
+    );
+    expect(entries[0]?.url).toBe("http://legacy.example/");
+
+    expect(buildAwesomeMacSites(entries, { onWarning: (message) => warnings.push(message) })).toEqual([]);
+    expect(
+      buildAwesomeMacSites(entries, {
+        audit: {
+          verified: [],
+          removed: [],
+          moved: [{ from: "http://legacy.example/", to: "https://legacy.example/", reason: "test" }],
+          highRisk: [],
+        },
+      }).map((site) => site.url),
+    ).toEqual(["https://legacy.example/"]);
+    expect(warnings).toEqual([expect.stringContaining("http://legacy.example/ is not HTTPS")]);
+  });
+
   it("writes one flow mapping per site that round-trips through YAML", () => {
     const sites = buildAwesomeMacSites(parseAwesomeMacMarkdown(englishReadme));
     const yaml = stringifyAwesomeMacSites(sites);

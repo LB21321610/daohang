@@ -1,8 +1,11 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+// BASE_PATH is set by the Pages workflow ("/repo" for a project site, "" for a custom domain).
+const base = `/${(process.env.BASE_PATH ?? "").replace(/^\/+|\/+$/g, "")}/`.replace(/^\/\/$/, "/");
+
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? `/${process.env.GITHUB_REPOSITORY?.split("/")[1] ?? ""}/` : "/",
+  base,
   build: {
     outDir: "dist/client",
   },

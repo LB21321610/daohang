@@ -12,7 +12,7 @@
     "dev": "npm run content:build && vite",
     "build": "npm run content:build && tsc --noEmit && vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "npm run content:build && tsc --noEmit",
     "lint": "eslint .",
     "audit:high": "npm audit --audit-level=high",
     "test": "npm run content:build && vitest run",
