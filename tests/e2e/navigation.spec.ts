@@ -238,6 +238,8 @@ test("keeps the mobile layout within the viewport", async ({ page }, testInfo) =
   await page.goto("./");
 
   await expect(page.getByRole("button", { name: "Windows" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "常用" })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole("button", { name: "Windows" })).toBeInViewport({ ratio: 1 });
   await page.getByRole("button", { name: "Windows" }).click();
   await expect(page.getByRole("heading", { name: "软件资源" })).toBeVisible();
 
@@ -289,4 +291,55 @@ test("requires confirmation again in a fresh browser session", async ({ browser,
   await freshAppNee.click();
   await expect(freshPage.getByRole("dialog", { name: "访问外部站点" })).toBeVisible();
   await freshContext.close();
+});
+
+test("follows the system dark colour scheme", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("./");
+
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(17, 19, 24)");
+  await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgb(24, 27, 33)");
+  await expect(page.locator(".site-name").first()).toHaveCSS("color", "rgb(232, 234, 238)");
+
+  await page.getByPlaceholder("搜索网站、分类或标签").focus();
+  await expect(page.locator(".search-field")).toHaveCSS("border-color", "rgb(107, 157, 255)");
+});
+
+test("jumps to a section from the sticky section bar", async ({ page }, testInfo) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "音频" }).click();
+
+  await expect(page.getByRole("heading", { level: 1, name: "音频" })).toBeVisible();
+  const jumpBar = page.getByRole("navigation", { name: "小节" });
+  await expect(jumpBar.getByRole("link")).toHaveCount(8);
+
+  await jumpBar.getByRole("link", { name: /鼓与节奏/ }).click();
+  const heading = page.getByRole("heading", { level: 2, name: "鼓与节奏" });
+  await expect(heading).toBeFocused();
+  await expect(heading).toBeInViewport();
+
+  if (testInfo.project.name === "desktop") {
+    await expect(jumpBar).toBeInViewport();
+    const [barBox, headingBox] = await Promise.all([jumpBar.boundingBox(), heading.boundingBox()]);
+    expect(headingBox!.y).toBeGreaterThanOrEqual(barBox!.y + barBox!.height);
+  }
+
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+});
+
+test("focuses search from the keyboard and clears it", async ({ page }) => {
+  await page.goto("./");
+  const input = page.getByPlaceholder("搜索网站、分类或标签");
+
+  await page.keyboard.press("/");
+  await expect(input).toBeFocused();
+  await input.fill("github");
+  await expect(page.locator("mark.search-match").first()).toHaveText(/github/i);
+  await page.keyboard.press("Escape");
+  await expect(input).toHaveValue("");
+  await expect(page.getByRole("heading", { name: "常用" })).toBeVisible();
 });

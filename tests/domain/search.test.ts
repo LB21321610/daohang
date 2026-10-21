@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { searchSites } from "../../src/domain/search";
+import { highlightSegments, searchSites } from "../../src/domain/search";
 import type { Category, Site } from "../../src/domain/site";
 
 const categories: Category[] = [
@@ -139,5 +139,31 @@ describe("searchSites", () => {
     expect(searchSites(sites, categories, "游戏工具").map((site) => site.id)).toEqual([
       "legacy-game-tool",
     ]);
+  });
+});
+
+describe("highlightSegments", () => {
+  it("marks every case-insensitive match while keeping the original casing", () => {
+    expect(highlightSegments("GitHub git", "GIT")).toEqual([
+      { text: "Git", match: true },
+      { text: "Hub ", match: false },
+      { text: "git", match: true },
+    ]);
+  });
+
+  it("matches Chinese text", () => {
+    expect(highlightSegments("游戏数字商店", "商店")).toEqual([
+      { text: "游戏数字", match: false },
+      { text: "商店", match: true },
+    ]);
+  });
+
+  it("returns the whole text unmarked for empty or unmatched queries", () => {
+    expect(highlightSegments("GitHub", "   ")).toEqual([{ text: "GitHub", match: false }]);
+    expect(highlightSegments("GitHub", "xyz")).toEqual([{ text: "GitHub", match: false }]);
+  });
+
+  it("skips highlighting when case mapping changes the text length", () => {
+    expect(highlightSegments("İstanbul", "stan")).toEqual([{ text: "İstanbul", match: false }]);
   });
 });

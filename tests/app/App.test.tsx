@@ -663,6 +663,116 @@ describe("App", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("shows a category header with totals and a section jump bar", async () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "游戏" })).toBeInTheDocument();
+    expect(screen.getByText("3 个网站")).toBeInTheDocument();
+    const jumpBar = screen.getByRole("navigation", { name: "小节" });
+    expect(within(jumpBar).getAllByRole("link").map((link) => link.textContent)).toEqual(["游戏商店2", "游戏工具1"]);
+
+    await user.click(within(jumpBar).getByRole("link", { name: /游戏工具/ }));
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    expect(screen.getByRole("heading", { level: 2, name: "游戏工具" })).toHaveFocus();
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+  });
+
+  it("omits empty sections from the jump bar", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "音频" }));
+
+    const jumpBar = screen.getByRole("navigation", { name: "小节" });
+    expect(within(jumpBar).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "DAW 与 DJ1",
+      "人声处理与修复1",
+    ]);
+  });
+
+  it("shows no page header or jump bar on home, flat categories, or search", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    expect(screen.queryByRole("navigation", { name: "小节" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "AI" }));
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "小节" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+    await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "steam");
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "小节" })).not.toBeInTheDocument();
+  });
+
+  it("focuses search with / and Ctrl+K without hijacking typed slashes", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+    const input = screen.getByPlaceholderText("搜索网站、分类或标签");
+
+    await user.keyboard("/");
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("");
+
+    await user.type(input, "a/b");
+    expect(input).toHaveValue("a/b");
+
+    input.blur();
+    await user.keyboard("{Control>}k{/Control}");
+    expect(input).toHaveFocus();
+  });
+
+  it("ignores the search shortcut while a dialog is open", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "免责声明" }));
+    await user.keyboard("/");
+
+    expect(screen.getByPlaceholderText("搜索网站、分类或标签")).not.toHaveFocus();
+  });
+
+  it("clears the search with Escape or the clear button", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+    const input = screen.getByPlaceholderText("搜索网站、分类或标签");
+
+    await user.type(input, "git");
+    await user.keyboard("{Escape}");
+    expect(input).toHaveValue("");
+    expect(screen.queryByRole("button", { name: "清除搜索" })).not.toBeInTheDocument();
+
+    await user.type(input, "git");
+    input.blur();
+    await user.click(screen.getByRole("button", { name: "清除搜索" }));
+    expect(input).toHaveValue("");
+    expect(input).toHaveFocus();
+    expect(screen.getByRole("heading", { name: "常用" })).toBeInTheDocument();
+  });
+
+  it("reports the result count and highlights matches", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "git");
+
+    const results = screen.getByRole("region", { name: "搜索结果" });
+    expect(within(results).getByText("1 个")).toBeInTheDocument();
+    expect(screen.getByText("找到 1 个网站")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /GitHub/ });
+    expect(link.querySelector("mark")?.textContent).toBe("Git");
+    expect(link.textContent).toContain("GitHub");
+
+    await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "zzz");
+    expect(screen.getByText("没有找到匹配的网站", { selector: "p" })).toBeInTheDocument();
+  });
+
   it("skips the modal exit hold when reduced motion is requested", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation(
       (query) =>

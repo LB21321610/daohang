@@ -13,6 +13,30 @@ function scoreField(value: string, query: string, exact: number, prefix: number,
   return 0;
 }
 
+export interface HighlightSegment {
+  text: string;
+  match: boolean;
+}
+
+export function highlightSegments(text: string, rawQuery: string): HighlightSegment[] {
+  const query = normalize(rawQuery);
+  const lowered = text.toLocaleLowerCase("zh-CN");
+  // Case mapping can change string length (e.g. "İ"), which would misalign offsets.
+  if (!query || lowered.length !== text.length) return [{ text, match: false }];
+
+  const segments: HighlightSegment[] = [];
+  let cursor = 0;
+  let index = lowered.indexOf(query);
+  while (index !== -1) {
+    if (index > cursor) segments.push({ text: text.slice(cursor, index), match: false });
+    segments.push({ text: text.slice(index, index + query.length), match: true });
+    cursor = index + query.length;
+    index = lowered.indexOf(query, cursor);
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor), match: false });
+  return segments.length ? segments : [{ text, match: false }];
+}
+
 export function searchSites(sites: Site[], categories: Category[], rawQuery: string): Site[] {
   const query = normalize(rawQuery);
   if (!query) return sites;

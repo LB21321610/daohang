@@ -40,7 +40,7 @@ import {
 } from "react";
 
 import generatedCatalog from "../generated/sites.json";
-import { searchSites } from "../domain/search";
+import { highlightSegments, searchSites } from "../domain/search";
 import type { CategoryId, LinkedSite, Site, SiteCatalog } from "../domain/site";
 import { readFavoriteIds, toggleFavorite } from "../features/favorites/favoriteStore";
 import { getBrowserStorage, readStorageItem, writeStorageItem } from "../features/storage/browserStorage";
@@ -62,6 +62,7 @@ interface Section {
   id: string;
   title: string;
   sites: Site[];
+  count?: number;
   showsDisclaimer?: boolean;
 }
 
@@ -106,6 +107,26 @@ function getRiskAcknowledgement(): boolean {
 
 function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName))
+  );
+}
+
+function Highlight({ text, query }: { text: string; query?: string }) {
+  if (!query) return text;
+  return highlightSegments(text, query).map((segment, index) =>
+    segment.match ? (
+      <mark className="search-match" key={index}>
+        {segment.text}
+      </mark>
+    ) : (
+      segment.text
+    ),
+  );
 }
 
 function SiteIcon({ site }: { site: Site }) {
@@ -256,12 +277,14 @@ function Modal({
 
 function SiteRow({
   site,
+  highlightQuery,
   isFavorite,
   onFavorite,
   onRiskClick,
   riskAcknowledged,
 }: {
   site: Site;
+  highlightQuery?: string;
   isFavorite: boolean;
   onFavorite: (siteId: string) => void;
   onRiskClick: (event: MouseEvent<HTMLElement>, site: LinkedSite) => void;
@@ -277,8 +300,12 @@ function SiteRow({
       >
         <div className="site-link site-link--unavailable">
           <SiteIcon site={site} />
-          <span className="site-name">{site.name}</span>
-          <span className="site-description">{site.description}</span>
+          <span className="site-name">
+            <Highlight query={highlightQuery} text={site.name} />
+          </span>
+          <span className="site-description">
+            <Highlight query={highlightQuery} text={site.description} />
+          </span>
         </div>
         <span className="site-unavailable-status">暂无稳定链接</span>
       </article>
@@ -291,14 +318,18 @@ function SiteRow({
     <>
       <SiteIcon site={site} />
       <span className="site-title">
-        <span className="site-name">{site.name}</span>
+        <span className="site-name">
+          <Highlight query={highlightQuery} text={site.name} />
+        </span>
         {site.linkStatus === "unchecked" ? (
           <span aria-hidden="true" className="site-link-status">
             待核验
           </span>
         ) : null}
       </span>
-      <span className="site-description">{site.description}</span>
+      <span className="site-description">
+        <Highlight query={highlightQuery} text={site.description} />
+      </span>
     </>
   );
 
@@ -348,6 +379,7 @@ function SiteRow({
 
 function SiteSection({
   section,
+  highlightQuery,
   favoriteIds,
   onFavorite,
   onDisclaimer,
@@ -355,6 +387,7 @@ function SiteSection({
   riskAcknowledged,
 }: {
   section: Section;
+  highlightQuery?: string;
   favoriteIds: string[];
   onFavorite: (siteId: string) => void;
   onDisclaimer: () => void;
@@ -364,7 +397,10 @@ function SiteSection({
   return (
     <section className="site-section" aria-labelledby={`section-${section.id}`}>
       <div className="section-heading">
-        <h2 id={`section-${section.id}`}>{section.title}</h2>
+        <h2 id={`section-${section.id}`} tabIndex={-1}>
+          {section.title}
+        </h2>
+        {section.count !== undefined ? <span className="section-count">{section.count} 个</span> : null}
         {section.showsDisclaimer ? (
           <button className="inline-disclaimer" onClick={onDisclaimer} type="button">
             （外部站点，请自行甄别）
@@ -374,6 +410,7 @@ function SiteSection({
       <div className="site-list">
         {section.sites.map((site) => (
           <SiteRow
+            highlightQuery={highlightQuery}
             isFavorite={favoriteIds.includes(site.id)}
             key={site.id}
             onFavorite={onFavorite}
@@ -397,6 +434,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const navRef = useRef<HTMLElement>(null);
   const navButtonRefs = useRef(new Map<ViewId, HTMLButtonElement>());
   const contentRef = useRef<HTMLElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const contentAnimationRef = useRef<Animation | null>(null);
   const favoriteAnimationRef = useRef<Animation | null>(null);
   const pendingFavoriteIdRef = useRef<string | null>(null);
@@ -438,6 +476,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
           id: "search",
           title: "搜索结果",
           sites,
+          count: sites.length,
           showsDisclaimer: sites.some((site) => site.riskLevel === "high"),
         },
       ];
@@ -455,6 +494,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
               id: `${category.id}-${categorySection.id}`,
               title: categorySection.label,
               sites: sectionSites,
+              count: sectionSites.length,
               showsDisclaimer: sectionSites.some((site) => site.riskLevel === "high"),
             };
           });
@@ -465,6 +505,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
               id: category.id,
               title: category.homeLabel,
               sites,
+              count: sites.length,
               showsDisclaimer: sites.some((site) => site.riskLevel === "high"),
             },
           ]
@@ -563,6 +604,23 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     closeModal();
   };
 
+  const jumpToSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const heading = document.getElementById(`section-${sectionId}`);
+    if (!heading) return;
+    event.preventDefault();
+    const target = heading.closest("section") ?? heading;
+    if (typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    }
+    heading.focus({ preventScroll: true });
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    searchInputRef.current?.focus();
+  };
+
   const navItems = [...catalog.categories]
     .sort((left, right) => left.order - right.order)
     .map((category) => ({
@@ -575,6 +633,9 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
       ? "search-results"
       : "search-empty"
     : "browse";
+  const activeCategory = activeView === "home" ? undefined : categoryById.get(activeView);
+  const showsPageHeader = !isSearching && Boolean(activeCategory?.sections);
+  const resultCount = isSearching ? (sections[0]?.sites.length ?? 0) : 0;
 
   useLayoutEffect(() => {
     const currentState = { mode: contentMode, view: activeView };
@@ -629,6 +690,26 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     },
     [],
   );
+
+  useEffect(() => {
+    if (modal) return;
+
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.isComposing || event.altKey) return;
+      const isCommandK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      const isSlash = event.key === "/" && !event.metaKey && !event.ctrlKey && !isEditableTarget(event.target);
+      if (!isCommandK && !isSlash) return;
+
+      const input = searchInputRef.current;
+      if (!input) return;
+      event.preventDefault();
+      input.focus();
+      input.select();
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [modal]);
 
   const positionNavIndicator = useCallback(() => {
     const navigation = navRef.current;
@@ -694,19 +775,65 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
 
       <div className="content-shell">
         <header className="topbar">
-          <label className="search-field">
-            <MagnifyingGlass size={24} aria-hidden="true" />
-            <span className="sr-only">搜索网站</span>
-            <input
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="搜索网站、分类或标签"
-              type="search"
-              value={query}
-            />
-          </label>
+          <div className="search-field">
+            <label className="search-label">
+              <MagnifyingGlass size={24} aria-hidden="true" />
+              <span className="sr-only">搜索网站</span>
+              <input
+                aria-keyshortcuts="/ Control+K Meta+K"
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Escape" || query === "") return;
+                  event.preventDefault();
+                  setQuery("");
+                }}
+                placeholder="搜索网站、分类或标签"
+                ref={searchInputRef}
+                type="search"
+                value={query}
+              />
+            </label>
+            {query ? (
+              <button aria-label="清除搜索" className="search-clear" onClick={clearSearch} type="button">
+                <X size={18} />
+              </button>
+            ) : (
+              <kbd aria-hidden="true" className="search-shortcut">
+                /
+              </kbd>
+            )}
+          </div>
         </header>
+        <p aria-live="polite" className="sr-only">
+          {isSearching ? (resultCount ? `找到 ${resultCount} 个网站` : "没有找到匹配的网站") : ""}
+        </p>
 
         <main className="main-content" data-testid="content-stage" ref={contentRef}>
+          {showsPageHeader && activeCategory ? (
+            <>
+              <header className="page-header">
+                <h1>{activeCategory.label}</h1>
+                <span className="page-header-count">
+                  {sections.reduce((total, section) => total + section.sites.length, 0)} 个网站
+                </span>
+              </header>
+              <nav aria-label="小节" className="section-jump">
+                {sections
+                  .filter((section) => section.sites.length > 0)
+                  .map((section) => (
+                    <a
+                      className="section-jump-link"
+                      href={`#section-${section.id}`}
+                      key={section.id}
+                      onClick={(event) => jumpToSection(event, section.id)}
+                    >
+                      {section.title}
+                      <span className="section-jump-count">{section.sites.length}</span>
+                    </a>
+                  ))}
+              </nav>
+            </>
+          ) : null}
           {contentMode === "search-empty" ? (
             <div className="empty-state">
               <MagnifyingGlass size={32} />
@@ -717,6 +844,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
             sections.map((section) => (
               <SiteSection
                 favoriteIds={favoriteIds}
+                highlightQuery={isSearching ? trimmedQuery : undefined}
                 key={section.id}
                 onDisclaimer={() => openModal({ kind: "disclaimer" })}
                 onFavorite={handleFavorite}
