@@ -647,6 +647,9 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     const searchStateChanged = previousState.mode !== contentMode;
     if (!categoryChanged && !searchStateChanged) return;
 
+    // A section jump leaves the window scrolled down; a new category should start at its top.
+    if (categoryChanged) window.scrollTo({ top: 0, behavior: "instant" });
+
     contentAnimationRef.current?.cancel();
     contentAnimationRef.current = null;
     if (prefersReducedMotion()) return;

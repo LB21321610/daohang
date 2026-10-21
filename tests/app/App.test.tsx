@@ -683,6 +683,22 @@ describe("App", () => {
     Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
   });
 
+  it("scrolls back to the top when switching categories after a section jump", async () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "游戏" }));
+    scrollTo.mockClear();
+    await user.click(within(screen.getByRole("navigation", { name: "小节" })).getByRole("link", { name: /游戏工具/ }));
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "音频" }));
+
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
+    scrollTo.mockRestore();
+  });
+
   it("omits empty sections from the jump bar", async () => {
     const user = userEvent.setup();
     render(<App catalog={catalog} />);
