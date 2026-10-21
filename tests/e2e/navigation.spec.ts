@@ -1,7 +1,54 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function gotoApp(page: Page) {
+  await page.goto("./");
+  await page.getByRole("button", { name: "我知道了", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "使用说明" })).toHaveCount(0);
+}
+
+test("shows the launch notice on every load and supports all four ways to dismiss it", async ({ page }) => {
+  await page.goto("./");
+
+  for (const dismiss of ["acknowledge", "close", "escape", "backdrop"]) {
+    const dialog = page.getByRole("dialog", { name: "使用说明" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("此项目仅供个人使用。");
+    await expect(dialog.locator(".modal-tool-tag")).toHaveText(["Claude", "Codex"]);
+    for (const background of [".sidebar", ".content-shell"]) {
+      expect(await page.locator(background).evaluate((element) => (element as HTMLElement).inert)).toBe(true);
+    }
+    for (const shortcut of ["/", "Meta+k", "Control+k"]) {
+      await page.keyboard.press(shortcut);
+      await expect(page.getByPlaceholder("搜索网站、分类或标签")).not.toBeFocused();
+    }
+
+    if (dismiss === "acknowledge") {
+      await dialog.getByRole("button", { name: "我知道了", exact: true }).click();
+    } else if (dismiss === "close") {
+      await dialog.getByRole("button", { name: "关闭", exact: true }).click();
+    } else if (dismiss === "escape") {
+      await page.keyboard.press("Escape");
+    } else {
+      await page.locator(".modal-backdrop").click({ position: { x: 4, y: 4 } });
+    }
+    await expect(dialog).toHaveCount(0);
+    for (const background of [".sidebar", ".content-shell"]) {
+      expect(await page.locator(background).evaluate((element) => (element as HTMLElement).inert)).toBe(false);
+    }
+
+    await page.getByRole("button", { name: "AI", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "AI 工具" })).toBeVisible();
+    await page.keyboard.press("/");
+    await expect(page.getByPlaceholder("搜索网站、分类或标签")).toBeFocused();
+    await expect(dialog).toHaveCount(0);
+    await page.reload();
+  }
+
+  await expect(page.getByRole("dialog", { name: "使用说明" })).toBeVisible();
+});
 
 test("renders the navigation shell and supports global search", async ({ page }, testInfo) => {
-  await page.goto("./");
+  await gotoApp(page);
   await expect(page).toHaveTitle("kx导航站");
 
   if (testInfo.project.name === "desktop") {
@@ -19,7 +66,7 @@ test("renders the navigation shell and supports global search", async ({ page },
 });
 
 test("shows a clear restrained search focus treatment", async ({ page }) => {
-  await page.goto("./");
+  await gotoApp(page);
 
   const search = page.getByPlaceholder("搜索网站、分类或标签");
   const field = page.locator(".search-field");
@@ -33,7 +80,7 @@ test("shows a clear restrained search focus treatment", async ({ page }) => {
 
 test("presents final motion states immediately when reduced motion is requested", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("./");
+  await gotoApp(page);
 
   const indicator = page.getByTestId("nav-indicator");
   const content = page.getByTestId("content-stage");
@@ -51,7 +98,7 @@ test("presents final motion states immediately when reduced motion is requested"
 });
 
 test("moves one category indicator and gives resource rows restrained hover feedback", async ({ page }, testInfo) => {
-  await page.goto("./");
+  await gotoApp(page);
 
   const indicator = page.getByTestId("nav-indicator");
   const aiButton = page.getByRole("button", { name: "AI", exact: true });
@@ -100,7 +147,7 @@ test("moves one category indicator and gives resource rows restrained hover feed
 });
 
 test("browses and searches the audio catalog without horizontal overflow", async ({ page }) => {
-  await page.goto("./");
+  await gotoApp(page);
 
   await page.getByRole("button", { name: "音频" }).click();
   await expect(page.getByRole("heading", { name: "DAW 与 DJ" })).toBeVisible();
@@ -125,7 +172,7 @@ test("browses and searches the audio catalog without horizontal overflow", async
 });
 
 test("updates continuous Chinese search without remounting or leaving residual motion", async ({ page }) => {
-  await page.goto("./");
+  await gotoApp(page);
 
   const input = page.getByPlaceholder("搜索网站、分类或标签");
   const content = page.getByTestId("content-stage");
@@ -155,7 +202,7 @@ test("updates continuous Chinese search without remounting or leaving residual m
 });
 
 test("persists favorites after a reload", async ({ page }) => {
-  await page.goto("./");
+  await gotoApp(page);
 
   await page.getByRole("button", { name: "收藏 GitHub" }).click();
   const relocatedFavorite = page.getByRole("button", { name: "取消收藏 GitHub" });
@@ -175,6 +222,8 @@ test("persists favorites after a reload", async ({ page }) => {
   });
   await expect(favoriteIcon).toHaveCSS("transform", "none");
   await page.reload();
+  await page.getByRole("button", { name: "我知道了", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "使用说明" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "我的收藏" })).toBeVisible();
   await expect(page.getByRole("button", { name: "取消收藏 GitHub" })).toBeVisible();
@@ -193,7 +242,7 @@ test("shows disclaimer and gates a high-risk site once per session", async ({ pa
       },
     });
   });
-  await page.goto("./");
+  await gotoApp(page);
 
   await page.getByRole("button", { name: "免责声明" }).click();
   const disclaimerDialog = page.getByRole("dialog", { name: "免责声明" });
@@ -236,7 +285,7 @@ test("shows disclaimer and gates a high-risk site once per session", async ({ pa
 
 test("keeps the mobile layout within the viewport", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "Mobile-only layout check");
-  await page.goto("./");
+  await gotoApp(page);
 
   await expect(page.getByRole("button", { name: "Windows" })).toBeVisible();
   await expect(page.getByRole("button", { name: "常用" })).toBeInViewport({ ratio: 1 });
@@ -254,7 +303,7 @@ test("keeps the mobile layout within the viewport", async ({ page }, testInfo) =
 test("keeps the last navigation item and disclaimer reachable on a short desktop", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Short desktop-only layout check");
   await page.setViewportSize({ width: 1280, height: 700 });
-  await page.goto("./");
+  await gotoApp(page);
 
   await expect(page.locator(".sidebar")).toHaveCSS("overflow-y", "auto");
 
@@ -277,7 +326,7 @@ test("requires confirmation again in a fresh browser session", async ({ browser,
   await page.addInitScript(() => {
     Object.defineProperty(window, "open", { configurable: true, value: () => null });
   });
-  await page.goto("./");
+  await gotoApp(page);
   await page.getByRole("button", { name: "Windows" }).click();
   await page.getByRole("link", { name: /AppNee/ }).click();
   await page.getByRole("button", { name: "继续访问" }).click();
@@ -285,7 +334,7 @@ test("requires confirmation again in a fresh browser session", async ({ browser,
 
   const freshContext = await browser.newContext({ baseURL: String(testInfo.project.use.baseURL) });
   const freshPage = await freshContext.newPage();
-  await freshPage.goto("./");
+  await gotoApp(freshPage);
   await freshPage.getByRole("button", { name: "Windows" }).click();
   const freshAppNee = freshPage.getByRole("link", { name: /AppNee/ });
   await expect(freshAppNee).not.toHaveAttribute("href");
@@ -296,7 +345,7 @@ test("requires confirmation again in a fresh browser session", async ({ browser,
 
 test("follows the system dark colour scheme", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  await page.goto("./");
+  await gotoApp(page);
 
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(17, 19, 24)");
   await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgba(30, 33, 40, 0.5)");
@@ -309,7 +358,7 @@ test("follows the system dark colour scheme", async ({ page }) => {
 
 test("drops the glass material in forced colours mode", async ({ page }) => {
   await page.emulateMedia({ forcedColors: "active" });
-  await page.goto("./");
+  await gotoApp(page);
 
   await expect(page.locator(".sidebar")).toHaveCSS("backdrop-filter", "none");
   await expect(page.locator(".topbar")).toHaveCSS("backdrop-filter", "none");
@@ -319,7 +368,7 @@ test("drops the glass material in forced colours mode", async ({ page }) => {
 });
 
 test("jumps to a section from the sticky section bar", async ({ page }, testInfo) => {
-  await page.goto("./");
+  await gotoApp(page);
   await page.getByRole("button", { name: "音频" }).click();
 
   await expect(page.getByRole("heading", { level: 1, name: "音频" })).toBeVisible();
@@ -350,7 +399,7 @@ test("jumps to a section from the sticky section bar", async ({ page }, testInfo
 });
 
 test("focuses search from the keyboard and clears it", async ({ page }) => {
-  await page.goto("./");
+  await gotoApp(page);
   const input = page.getByPlaceholder("搜索网站、分类或标签");
 
   await page.keyboard.press("/");
@@ -363,7 +412,7 @@ test("focuses search from the keyboard and clears it", async ({ page }) => {
 });
 
 test("browses the imported awesome-mac column on desktop and phone", async ({ page }, testInfo) => {
-  await page.goto("./");
+  await gotoApp(page);
   const navItem = page.getByRole("button", { name: "Awesome Mac" });
   await navItem.scrollIntoViewIfNeeded();
   await navItem.click();

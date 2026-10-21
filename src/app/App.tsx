@@ -52,13 +52,17 @@ const RISK_ACKNOWLEDGEMENT_KEY = "personal-nav:risk-ack:v1";
 const MOTION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 const DISCLAIMER =
   "本站仅提供公开网址索引，不存储、上传或分发第三方文件，也不对外部站点的合法性、安全性、准确性或可用性作保证。访问和使用第三方内容前，请自行确认所在地法律、软件许可及版权要求；由此产生的风险由访问者自行承担。";
+const LAUNCH_NOTICE_TITLE = "使用说明";
+const LAUNCH_NOTICE_PERSONAL_USE = "此项目仅供个人使用。";
+const LAUNCH_NOTICE_DEVELOPMENT = "本站在开发过程中使用了 Claude 与 Codex 辅助完成。";
 
 type ViewId = "home" | CategoryId;
-type ModalState = { kind: "disclaimer" } | { kind: "risk"; site: LinkedSite } | null;
+type ModalState = { kind: "launch" } | { kind: "disclaimer" } | { kind: "risk"; site: LinkedSite } | null;
 type ContentMode = "browse" | "search-empty" | "search-results";
 
 interface AppProps {
   catalog?: SiteCatalog;
+  showLaunchNotice?: boolean;
 }
 
 interface Section {
@@ -161,7 +165,11 @@ function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const previousFocusKeyRef = useRef<string | null>(null);
-  const isRisk = state.kind === "risk";
+  const title = {
+    launch: LAUNCH_NOTICE_TITLE,
+    disclaimer: "免责声明",
+    risk: "访问外部站点",
+  }[state.kind];
   const requestClose = () => {
     if (!isClosing) onClose();
   };
@@ -241,16 +249,31 @@ function Modal({
         ref={modalRef}
         role="dialog"
       >
-        <div className={`modal-icon ${isRisk ? "modal-icon--warning" : ""}`} aria-hidden="true">
-          {isRisk ? <ShieldWarning size={24} weight="duotone" /> : <Info size={24} weight="duotone" />}
+        <div className={`modal-icon ${state.kind === "risk" ? "modal-icon--warning" : ""}`} aria-hidden="true">
+          {state.kind === "risk" ? <ShieldWarning size={24} weight="duotone" /> : <Info size={24} weight="duotone" />}
         </div>
         <button className="modal-close" onClick={requestClose} ref={closeButtonRef} type="button">
           <X size={18} />
           <span className="sr-only">关闭</span>
         </button>
-        <h2 id="modal-title">{isRisk ? "访问外部站点" : "免责声明"}</h2>
+        <h2 id="modal-title">{title}</h2>
         <div className="modal-description" id="modal-description">
-          {isRisk ? (
+          {state.kind === "launch" ? (
+            <>
+              <p><strong>{LAUNCH_NOTICE_PERSONAL_USE}</strong></p>
+              <p>{LAUNCH_NOTICE_DEVELOPMENT}</p>
+              <div className="modal-tool-tags">
+                <span className="modal-tool-tag">
+                  <ChatCircleDots aria-hidden="true" color="var(--color-icon)" size={16} weight="bold" />
+                  Claude
+                </span>
+                <span className="modal-tool-tag">
+                  <OpenAiLogo aria-hidden="true" color="var(--color-icon)" size={16} />
+                  Codex
+                </span>
+              </div>
+            </>
+          ) : state.kind === "risk" ? (
             <>
               <p>{`即将访问 ${state.site.name}（${state.site.domain}）。该站点内容未经本站验证，请确认风险后继续。`}</p>
               <p className="modal-disclaimer-copy">{DISCLAIMER}</p>
@@ -260,10 +283,14 @@ function Modal({
           )}
         </div>
         <div className="modal-actions">
-          <button className="button button--secondary" onClick={requestClose} type="button">
-            {isRisk ? "取消" : "知道了"}
+          <button
+            className={`button ${state.kind === "launch" ? "button--primary" : "button--secondary"}`}
+            onClick={requestClose}
+            type="button"
+          >
+            {state.kind === "launch" ? "我知道了" : state.kind === "risk" ? "取消" : "知道了"}
           </button>
-          {isRisk ? (
+          {state.kind === "risk" ? (
             <button
               className="button button--primary"
               onClick={() => {
@@ -435,10 +462,10 @@ function SiteSection({
   );
 }
 
-export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
+export function App({ catalog = generatedCatalog as SiteCatalog, showLaunchNotice = true }: AppProps) {
   const [activeView, setActiveView] = useState<ViewId>("home");
   const [favoriteIds, setFavoriteIds] = useState<string[]>(getStoredFavorites);
-  const [modal, setModal] = useState<ModalState>(null);
+  const [modal, setModal] = useState<ModalState>(() => (showLaunchNotice ? { kind: "launch" } : null));
   const [isModalClosing, setIsModalClosing] = useState(false);
   const [query, setQuery] = useState("");
   const [riskAcknowledged, setRiskAcknowledged] = useState(getRiskAcknowledgement);

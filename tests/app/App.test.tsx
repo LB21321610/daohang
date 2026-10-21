@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -243,8 +243,70 @@ describe("App", () => {
     vi.useRealTimers();
   });
 
-  it("renders kx导航站 as the brand name", () => {
+  it("shows the launch notice by default and dismisses it for the current page", async () => {
+    const user = userEvent.setup();
     render(<App catalog={catalog} />);
+
+    const dialog = screen.getByRole("dialog", { name: "使用说明" });
+    expect(within(dialog).getByText("此项目仅供个人使用。")).toHaveProperty("tagName", "STRONG");
+    expect(within(dialog).getByText("本站在开发过程中使用了 Claude 与 Codex 辅助完成。")).toBeInTheDocument();
+    expect(within(dialog).getByText("Claude", { exact: true })).toBeInTheDocument();
+    expect(within(dialog).getByText("Codex", { exact: true })).toBeInTheDocument();
+    const acknowledge = within(dialog).getByRole("button", { name: "我知道了" });
+    expect(acknowledge).toHaveClass("button--primary");
+
+    await user.click(acknowledge);
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "AI" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it.each(["Escape", "close button", "backdrop"])("dismisses the launch notice with %s", async (method) => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+    const dialog = screen.getByRole("dialog", { name: "使用说明" });
+
+    if (method === "Escape") {
+      await user.keyboard("{Escape}");
+    } else if (method === "close button") {
+      await user.click(within(dialog).getByRole("button", { name: "关闭" }));
+    } else {
+      fireEvent.mouseDown(dialog.parentElement!);
+    }
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+  });
+
+  it("blocks search shortcuts and makes the background inert until the launch notice closes", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+    const dialog = screen.getByRole("dialog", { name: "使用说明" });
+    const input = screen.getByPlaceholderText("搜索网站、分类或标签");
+    const sidebar = document.querySelector<HTMLElement>(".sidebar");
+    const content = document.querySelector<HTMLElement>(".content-shell");
+    expect(sidebar?.inert).toBe(true);
+    expect(content?.inert).toBe(true);
+
+    for (const shortcut of ["/", "{Meta>}k{/Meta}", "{Control>}k{/Control}"]) {
+      await user.keyboard(shortcut);
+      expect(input).not.toHaveFocus();
+      expect(within(dialog).getByRole("button", { name: "关闭" })).toHaveFocus();
+    }
+    await user.tab({ shift: true });
+    expect(within(dialog).getByRole("button", { name: "我知道了" })).toHaveFocus();
+    await user.tab();
+    expect(within(dialog).getByRole("button", { name: "关闭" })).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(sidebar?.inert).toBeFalsy();
+    expect(content?.inert).toBeFalsy();
+    await user.keyboard("/");
+    expect(input).toHaveFocus();
+  });
+
+  it("renders kx导航站 as the brand name", () => {
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     expect(screen.getByText("kx导航站", { exact: true })).toBeInTheDocument();
     expect(screen.queryByText("个人导航", { exact: true })).not.toBeInTheDocument();
@@ -252,7 +314,7 @@ describe("App", () => {
 
   it("uses one persistent indicator for the active category", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     const indicator = screen.getByTestId("nav-indicator");
     await user.click(screen.getByRole("button", { name: "AI" }));
@@ -263,7 +325,7 @@ describe("App", () => {
 
   it("renders the home groups and filters by category", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     expect(screen.getByRole("heading", { name: "常用" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "AI 工具" })).toBeInTheDocument();
@@ -278,7 +340,7 @@ describe("App", () => {
 
   it("searches across site metadata", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "github.com");
 
@@ -288,7 +350,7 @@ describe("App", () => {
 
   it("renders the audio category before video with all configured sections", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     const navigation = screen.getByRole("navigation", { name: "网站分类" });
     const labels = within(navigation).getAllByRole("button").map((button) => button.textContent);
@@ -311,7 +373,7 @@ describe("App", () => {
 
   it("finds audio software by alias", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "Mantra");
 
@@ -321,7 +383,7 @@ describe("App", () => {
 
   it("renders configured category sections in order while preserving site order", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "游戏" }));
 
@@ -336,7 +398,7 @@ describe("App", () => {
 
   it("searches section labels and renders unavailable entries as disabled rows", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "游戏工具");
 
@@ -355,7 +417,7 @@ describe("App", () => {
     };
     vi.spyOn(window, "localStorage", "get").mockImplementation(blocked);
     vi.spyOn(window, "sessionStorage", "get").mockImplementation(blocked);
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
     expect(screen.getByRole("button", { name: "取消收藏 GitHub" })).toBeInTheDocument();
@@ -370,7 +432,7 @@ describe("App", () => {
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("full", "QuotaExceededError");
     });
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
     await user.click(screen.getByRole("button", { name: "收藏 AppNee" }));
@@ -381,7 +443,7 @@ describe("App", () => {
 
   it("treats a whitespace-only query as browsing", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "AI" }));
     await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "   ");
@@ -392,7 +454,7 @@ describe("App", () => {
 
   it("shows the warning on the favorites section when it holds a high-risk site", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "收藏 AppNee" }));
 
@@ -403,7 +465,7 @@ describe("App", () => {
   it("stores a favorite without opening the site", async () => {
     const user = userEvent.setup();
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
 
@@ -423,7 +485,7 @@ describe("App", () => {
     });
 
     try {
-      render(<App catalog={catalog} />);
+      render(<App catalog={catalog} showLaunchNotice={false} />);
 
       await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
 
@@ -446,7 +508,7 @@ describe("App", () => {
 
   it("moves focus to the active category when an unfavorited hidden-home site disappears", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "音频" }));
     await user.click(screen.getByRole("button", { name: "收藏 Ableton Live 12 Suite" }));
@@ -459,7 +521,7 @@ describe("App", () => {
 
   it("replaces category motion with the latest navigation and does not replay the active category", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const content = screen.getByTestId("content-stage");
     const firstCancel = vi.fn();
     const secondCancel = vi.fn();
@@ -482,7 +544,7 @@ describe("App", () => {
   });
 
   it("keeps one search result section mounted and only fades when the search state changes", () => {
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const content = screen.getByTestId("content-stage");
     const animate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
     Object.defineProperty(content, "animate", { configurable: true, value: animate });
@@ -529,7 +591,7 @@ describe("App", () => {
         }) as MediaQueryList,
     );
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const content = screen.getByTestId("content-stage");
     const cancel = vi.fn();
     const animate = vi.fn(() => ({ cancel }) as unknown as Animation);
@@ -550,7 +612,7 @@ describe("App", () => {
 
   it("opens the full disclaimer from the sidebar", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "免责声明" }));
 
@@ -561,7 +623,7 @@ describe("App", () => {
   it("requires one session-level confirmation before opening a high-risk site", async () => {
     const user = userEvent.setup();
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     const appNee = screen.getByRole("link", { name: /AppNee/ });
     expect(appNee).not.toHaveAttribute("href");
@@ -603,7 +665,7 @@ describe("App", () => {
 
   it("labels unchecked links for sighted and screen-reader users without changing verified links", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     const uncheckedLink = screen.getByRole("link", { name: /AppNee.*待核验/ });
     expect(within(uncheckedLink).getByText("待核验")).toBeInTheDocument();
@@ -618,7 +680,7 @@ describe("App", () => {
 
   it("keeps the warning visible when search results include a high-risk site", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "appnee.com");
 
@@ -627,7 +689,7 @@ describe("App", () => {
 
   it("traps dialog focus and restores it to the trigger", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const trigger = screen.getByRole("button", { name: "免责声明" });
 
     trigger.focus();
@@ -667,7 +729,7 @@ describe("App", () => {
     const scrollIntoView = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "游戏" }));
 
@@ -686,7 +748,7 @@ describe("App", () => {
   it("scrolls back to the top when switching categories after a section jump", async () => {
     const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "游戏" }));
     scrollTo.mockClear();
@@ -701,7 +763,7 @@ describe("App", () => {
 
   it("scrolls back to the top when a search starts or its query changes", () => {
     const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const input = screen.getByPlaceholderText("搜索网站、分类或标签");
 
     fireEvent.change(input, { target: { value: "g" } });
@@ -716,7 +778,7 @@ describe("App", () => {
 
   it("omits empty sections from the jump bar", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "音频" }));
 
@@ -729,7 +791,7 @@ describe("App", () => {
 
   it("shows no page header or jump bar on home, flat categories, or search", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     expect(screen.queryByRole("navigation", { name: "小节" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "AI" }));
@@ -744,7 +806,7 @@ describe("App", () => {
 
   it("focuses search with / and Ctrl+K without hijacking typed slashes", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const input = screen.getByPlaceholderText("搜索网站、分类或标签");
 
     await user.keyboard("/");
@@ -761,7 +823,7 @@ describe("App", () => {
 
   it("ignores the search shortcut while a dialog is open", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "免责声明" }));
     await user.keyboard("/");
@@ -771,7 +833,7 @@ describe("App", () => {
 
   it("clears the search with Escape or the clear button", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     const input = screen.getByPlaceholderText("搜索网站、分类或标签");
 
     await user.type(input, "git");
@@ -789,7 +851,7 @@ describe("App", () => {
 
   it("reports the result count and highlights matches", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "git");
 
@@ -819,7 +881,7 @@ describe("App", () => {
         }) as MediaQueryList,
     );
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "免责声明" }));
     await user.click(screen.getByRole("button", { name: "知道了" }));

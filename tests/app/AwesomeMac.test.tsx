@@ -68,7 +68,7 @@ const catalog: SiteCatalog = {
 describe("awesome-mac category", () => {
   it("credits the upstream project and license in the page header", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "Awesome Mac" }));
 
@@ -84,7 +84,7 @@ describe("awesome-mac category", () => {
 
   it("groups rows under upstream sub-headings while browsing, but not in search results", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "Awesome Mac" }));
 
@@ -106,7 +106,7 @@ describe("awesome-mac category", () => {
 
   it("does not show the credit line on categories without one", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
 
     await user.click(screen.getByRole("button", { name: "常用" }));
 
@@ -115,7 +115,7 @@ describe("awesome-mac category", () => {
 
   it("lets a vertical mouse wheel scroll the overflowing jump bar sideways", async () => {
     const user = userEvent.setup();
-    render(<App catalog={catalog} />);
+    render(<App catalog={catalog} showLaunchNotice={false} />);
     await user.click(screen.getByRole("button", { name: "Awesome Mac" }));
 
     const jumpBar = screen.getByRole("navigation", { name: "小节" });
