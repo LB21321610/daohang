@@ -341,6 +341,11 @@ test("jumps to a section from the sticky section bar", async ({ page }, testInfo
     viewportWidth: window.innerWidth,
   }));
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "游戏" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "游戏" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test("focuses search from the keyboard and clears it", async ({ page }) => {

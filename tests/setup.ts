@@ -13,3 +13,5 @@ Object.defineProperty(window, "matchMedia", {
     removeListener: () => undefined,
   }),
 });
+
+Object.defineProperty(window, "scrollTo", { writable: true, value: () => undefined });
