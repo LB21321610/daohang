@@ -298,11 +298,23 @@ test("follows the system dark colour scheme", async ({ page }) => {
   await page.goto("./");
 
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(17, 19, 24)");
-  await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgb(24, 27, 33)");
+  await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgba(30, 33, 40, 0.5)");
+  await expect(page.locator(".sidebar")).toHaveCSS("backdrop-filter", /blur\(20px\)/);
   await expect(page.locator(".site-name").first()).toHaveCSS("color", "rgb(232, 234, 238)");
 
   await page.getByPlaceholder("搜索网站、分类或标签").focus();
   await expect(page.locator(".search-field")).toHaveCSS("border-color", "rgb(107, 157, 255)");
+});
+
+test("drops the glass material in forced colours mode", async ({ page }) => {
+  await page.emulateMedia({ forcedColors: "active" });
+  await page.goto("./");
+
+  await expect(page.locator(".sidebar")).toHaveCSS("backdrop-filter", "none");
+  await expect(page.locator(".topbar")).toHaveCSS("backdrop-filter", "none");
+  expect(
+    await page.evaluate(() => getComputedStyle(document.body, "::before").getPropertyValue("display")),
+  ).toBe("none");
 });
 
 test("jumps to a section from the sticky section bar", async ({ page }, testInfo) => {

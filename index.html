@@ -4,11 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="个人常用网站与 AI 工具导航" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#181b21" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfbfc" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111318" />
     <title>kx导航站</title>
   </head>
   <body>
+    <svg aria-hidden="true" focusable="false" height="0" style="position: absolute" width="0">
+      <filter id="lg-refract" color-interpolation-filters="sRGB" height="140%" width="140%" x="-20%" y="-20%">
+        <feTurbulence baseFrequency="0.008 0.012" numOctaves="2" result="noise" seed="7" type="fractalNoise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
