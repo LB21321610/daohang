@@ -2,6 +2,7 @@ import {
   AppWindow,
   AppleLogo,
   Archive,
+  ArrowSquareOut,
   Brain,
   ChatCircleDots,
   ChatsCircle,
@@ -30,7 +31,9 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import {
+  Fragment,
   useCallback,
+  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -64,6 +67,7 @@ interface Section {
   sites: Site[];
   count?: number;
   showsDisclaimer?: boolean;
+  showsSubsections?: boolean;
 }
 
 const iconByName: Record<string, Icon> = {
@@ -95,6 +99,7 @@ const navIconById: Record<CategoryId, Icon> = {
   audio: MusicNotes,
   video: FilmStrip,
   media: Newspaper,
+  "awesome-mac": GithubLogo,
 };
 
 function getStoredFavorites(): string[] {
@@ -408,17 +413,23 @@ function SiteSection({
         ) : null}
       </div>
       <div className="site-list">
-        {section.sites.map((site) => (
-          <SiteRow
-            highlightQuery={highlightQuery}
-            isFavorite={favoriteIds.includes(site.id)}
-            key={site.id}
-            onFavorite={onFavorite}
-            onRiskClick={onRiskClick}
-            riskAcknowledged={riskAcknowledged}
-            site={site}
-          />
-        ))}
+        {section.sites.map((site, index) => {
+          const subsection = section.showsSubsections ? site.subsection : undefined;
+          const startsSubsection = subsection !== undefined && subsection !== section.sites[index - 1]?.subsection;
+          return (
+            <Fragment key={site.id}>
+              {startsSubsection ? <h3 className="site-subsection">{subsection}</h3> : null}
+              <SiteRow
+                highlightQuery={highlightQuery}
+                isFavorite={favoriteIds.includes(site.id)}
+                onFavorite={onFavorite}
+                onRiskClick={onRiskClick}
+                riskAcknowledged={riskAcknowledged}
+                site={site}
+              />
+            </Fragment>
+          );
+        })}
       </div>
     </section>
   );
@@ -435,6 +446,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const navButtonRefs = useRef(new Map<ViewId, HTMLButtonElement>());
   const contentRef = useRef<HTMLElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const sectionJumpRef = useRef<HTMLElement>(null);
   const contentAnimationRef = useRef<Animation | null>(null);
   const favoriteAnimationRef = useRef<Animation | null>(null);
   const pendingFavoriteIdRef = useRef<string | null>(null);
@@ -442,7 +454,8 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const previousContentStateRef = useRef<{ mode: ContentMode; view: ViewId } | null>(null);
   // Set to null after a failed write so later toggles build on the in-memory list.
   const favoriteStorageRef = useRef(getBrowserStorage("localStorage"));
-  const trimmedQuery = query.trim();
+  // Results render from a deferred copy so typing stays responsive across 1500+ sites.
+  const trimmedQuery = useDeferredValue(query).trim();
   const isSearching = trimmedQuery !== "";
 
   const closeModal = useCallback(() => {
@@ -496,6 +509,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
               sites: sectionSites,
               count: sectionSites.length,
               showsDisclaimer: sectionSites.some((site) => site.riskLevel === "high"),
+              showsSubsections: true,
             };
           });
       }
@@ -714,6 +728,27 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, [modal]);
 
+  // Long jump bars overflow sideways; let a plain mouse wheel scroll them until an edge is reached.
+  useEffect(() => {
+    const jumpBar = sectionJumpRef.current;
+    if (!showsPageHeader || !jumpBar) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      const maxScroll = jumpBar.scrollWidth - jumpBar.clientWidth;
+      if (maxScroll <= 0) return;
+
+      const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 16 : event.deltaY;
+      const nextScroll = Math.min(maxScroll, Math.max(0, jumpBar.scrollLeft + delta));
+      if (nextScroll === jumpBar.scrollLeft) return;
+      event.preventDefault();
+      jumpBar.scrollLeft = nextScroll;
+    };
+
+    jumpBar.addEventListener("wheel", handleWheel, { passive: false });
+    return () => jumpBar.removeEventListener("wheel", handleWheel);
+  }, [activeView, showsPageHeader]);
+
   const positionNavIndicator = useCallback(() => {
     const navigation = navRef.current;
     const activeButton = navButtonRefs.current.get(activeView);
@@ -820,7 +855,24 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
                   {sections.reduce((total, section) => total + section.sites.length, 0)} 个网站
                 </span>
               </header>
-              <nav aria-label="小节" className="section-jump">
+              {activeCategory.credit ? (
+                <p className="page-credit">
+                  <GithubLogo aria-hidden="true" className="page-credit-icon" size={16} weight="fill" />
+                  <span>
+                    本栏目收录自 GitHub 开源项目{" "}
+                    <a href={activeCategory.credit.url} rel="noopener noreferrer" target="_blank">
+                      {activeCategory.credit.label}
+                      <ArrowSquareOut aria-hidden="true" size={13} />
+                    </a>
+                    ，依{" "}
+                    <a href={activeCategory.credit.licenseUrl} rel="noopener noreferrer license" target="_blank">
+                      {activeCategory.credit.license}
+                    </a>{" "}
+                    协议署名引用
+                  </span>
+                </p>
+              ) : null}
+              <nav aria-label="小节" className="section-jump" ref={sectionJumpRef}>
                 {sections
                   .filter((section) => section.sites.length > 0)
                   .map((section) => (

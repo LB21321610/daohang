@@ -95,3 +95,42 @@
     - { id: international-film-tv, label: 国际影视, order: 20 }
     - { id: media-centers, label: 媒体中心 / 客户端, order: 30 }
     - { id: private-trackers, label: PT / BT, order: 40 }
+- id: awesome-mac
+  label: Awesome Mac
+  navLabel: Awesome Mac
+  homeLabel: Awesome Mac
+  order: 90
+  homeMode: hidden
+  homeGroup: awesome-mac
+  homeOrder: 90
+  credit:
+    label: jaywcjlove/awesome-mac
+    url: https://github.com/jaywcjlove/awesome-mac
+    license: CC BY 4.0
+    licenseUrl: https://creativecommons.org/licenses/by/4.0/deed.zh-hans
+  sections:
+    - { id: reading-writing, label: 阅读与写作, order: 10 }
+    - { id: developer, label: 开发者工具, order: 20 }
+    - { id: terminal, label: 终端应用, order: 30 }
+    - { id: design, label: 设计与产品, order: 40 }
+    - { id: ai-tools, label: AI 工具, order: 50 }
+    - { id: communication, label: 沟通协作, order: 60 }
+    - { id: data-recovery, label: 数据恢复, order: 70 }
+    - { id: audio-video, label: 音频与视频, order: 80 }
+    - { id: download, label: 下载管理, order: 90 }
+    - { id: cloud-storage, label: 云存储, order: 100 }
+    - { id: input-methods, label: 输入法, order: 110 }
+    - { id: voice-to-text, label: 语音转文字, order: 120 }
+    - { id: browsers, label: 浏览器, order: 130 }
+    - { id: translation, label: 翻译工具, order: 140 }
+    - { id: education, label: 教育, order: 150 }
+    - { id: finance, label: 财务, order: 160 }
+    - { id: encryption, label: 加密, order: 170 }
+    - { id: security, label: 安全工具, order: 180 }
+    - { id: proxy-vpn, label: 代理与 VPN, order: 190 }
+    - { id: utilities, label: 实用工具, order: 200 }
+    - { id: gaming, label: 游戏软件, order: 210 }
+    - { id: remote-login, label: 远程登录, order: 220 }
+    - { id: quicklook, label: QuickLook 插件, order: 230 }
+    - { id: app-markets, label: 第三方应用市场, order: 240 }
+    - { id: download-sites, label: 软件发现站, order: 250 }

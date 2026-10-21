@@ -10,6 +10,7 @@ export const categoryIds = [
   "audio",
   "video",
   "media",
+  "awesome-mac",
 ] as const;
 
 export type CategoryId = (typeof categoryIds)[number];
@@ -18,7 +19,7 @@ export type SiteReviewStatus = "verified" | "unverified";
 export type SiteLinkStatus = "verified" | "unchecked" | "unavailable";
 
 export interface SiteSource {
-  kind: "manual" | "carrot";
+  kind: "manual" | "carrot" | "awesome-mac";
   url?: string;
 }
 
@@ -28,6 +29,8 @@ interface SiteBase {
   description: string;
   category: CategoryId;
   section?: string;
+  /** Optional sub-heading inside a section, shown while browsing the category. */
+  subsection?: string;
   tags: string[];
   aliases?: string[];
   icon?: string;
@@ -57,6 +60,14 @@ export interface CategorySection {
   order: number;
 }
 
+/** Attribution for a category imported from another project. */
+export interface CategoryCredit {
+  label: string;
+  url: string;
+  license: string;
+  licenseUrl: string;
+}
+
 export interface Category {
   id: CategoryId;
   label: string;
@@ -67,6 +78,7 @@ export interface Category {
   homeGroup: string;
   homeOrder: number;
   sections?: CategorySection[];
+  credit?: CategoryCredit;
 }
 
 export interface SiteCatalog {
@@ -95,6 +107,15 @@ export const categorySchema = z
     homeGroup: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     homeOrder: z.number().int().nonnegative(),
     sections: z.array(categorySectionSchema).min(1).optional(),
+    credit: z
+      .object({
+        label: z.string().min(1),
+        url: z.string().url().startsWith("https://"),
+        license: z.string().min(1),
+        licenseUrl: z.string().url().startsWith("https://"),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((category, context) => {
@@ -134,6 +155,7 @@ const siteInputBaseSchema = z.object({
     description: z.string().min(1),
     category: z.enum(categoryIds),
     section: sectionIdSchema.optional(),
+    subsection: z.string().min(1).optional(),
     tags: z.array(z.string().min(1)).min(1),
     aliases: z.array(z.string().min(1)).optional(),
     icon: z.string().min(1).optional(),
@@ -142,7 +164,7 @@ const siteInputBaseSchema = z.object({
     reviewStatus: z.enum(["verified", "unverified"]),
     source: z
       .object({
-        kind: z.enum(["manual", "carrot"]),
+        kind: z.enum(["manual", "carrot", "awesome-mac"]),
         url: z.string().url().optional(),
       })
       .strict(),

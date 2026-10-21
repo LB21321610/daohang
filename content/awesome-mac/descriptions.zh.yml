@@ -1,0 +1,306 @@
+# 上游中文 README 没覆盖到的条目，在这里补中文描述（键为规范化后的网址）。
+# 改完运行 `npm run content:import-awesome-mac` 重新生成 content/sites/awesome-mac.yml。
+https://bootstrapstudio.io/: 基于 Bootstrap 框架制作响应式网站的桌面应用
+https://helix-editor.com/: 后现代风格的模态文本编辑器
+https://lapce.dev/: 闪电般快速且功能强大的代码编辑器
+https://github.com/macvim-dev/macvim: macOS 版 Vim 文本编辑器
+https://sindresorhus.com/plain-text-editor: 简洁无干扰的纯文本记事本
+https://tot.rocks/: 优雅简单的随手文本收集与编辑小工具
+https://apps.apple.com/app/keynote/id409183694?platform=mac: Apple 出品的演示文稿应用
+https://apps.apple.com/app/numbers/id409203825?platform=mac: Apple 出品的电子表格应用
+https://apps.apple.com/app/pages/id409201541?platform=mac: Apple 出品的文字处理与排版应用
+https://www.softmaker.com/en/softmaker-office: 力求完全兼容 Microsoft Office 文档的办公套件
+https://furnacecreek.org/archimedes: 面向数学写作、支持行内 LaTeX 的原生 Markdown 编辑器
+https://marxi.co/: 为印象笔记打造的 Markdown 编辑器，存储同步可靠
+https://www.ericli.io/scratch: 离线优先的轻量 Markdown 笔记，支持所见即所得和本地 AI 助手
+https://affine.pro/: 面向专业人士的新一代协作知识库
+https://www.appflowy.io/: Notion 的开源替代品
+https://www.craft.do/: 颜值很高的笔记与写作应用
+https://www.getdnote.com/: 支持多设备同步和网页端的命令行笔记本
+https://fsnot.es/: 基于文件系统的现代笔记管理器，原生支持 macOS 和 iOS
+https://goobapp.com/: 交互简洁的写作应用与任务管理器
+https://github.com/notable/notable: 基于 Markdown 的笔记应用，用起来不糟心
+https://noteplus.com/: 原生笔记应用，同时是大模型客户端
+https://outlineedit.com/: 功能完整的大纲编辑器，适合喜欢结构化笔记的人
+https://saber.adil.hanney.org/: 跨平台手写与文字笔记，支持导入图片和 PDF 并可同步
+https://www.apptorium.com/sidenotes: 停靠在屏幕侧边的快速笔记，支持 Markdown
+https://standardnotes.com/: 端到端加密的笔记应用
+https://quicknoteapp.com/: 菜单栏里的彩色便利贴
+https://dayoneapp.com/: 出色的日记应用，支持文字、照片、视频、音频和定位等内容
+https://journey.cloud/: 功能丰富的日记应用，各平台都有客户端
+https://mylifenote.ai/: 和历史上的伟大思想家一起写日记的 AI 日记本
+https://github.com/lostdesign/linked: 把想法关联到日期的无干扰日记应用
+https://www.literatureandlatte.com/scrivener/overview: 写作者的经典长文写作工具
+https://clearview-reader.github.io/clearview-x/index.html: 标签页式电子书阅读器，支持 PDF、EPUB（无 DRM）、CHM 和 MOBI
+https://www.koodoreader.com/en: 支持 15 种以上格式的全能电子书阅读器
+https://krillapps.com/feedy: 优雅轻量的 RSS 客户端和新闻阅读器
+https://doughnutapp.com/: 漂亮的开源播客客户端
+https://www.goldenhillsoftware.com/unread: 排版精美的 RSS 阅读器，支持 Feedbin、Feedly 等服务
+https://github.com/vishaltelangre/bindPDF: 用友好的界面把多个 PDF 合并成一个
+https://highlightsapp.net/: 面向科研阅读的 PDF 阅读器，支持 Mac、iPad 和 iPhone
+https://pdfpals.com/: 和 PDF 对话的 Mac 应用，不限文件大小
+https://www.tadviewer.com/: 查看和分析 CSV 等表格数据的应用
+https://updf.com/: 免费 PDF 编辑器，可阅读、批注和编辑 PDF
+https://www.zotero.org/: 免费的文献收集、整理、批注、引用与分享工具
+https://collate.one/get-started: 免费离线的 AI 工具，用来收集、总结和查询 PDF
+https://tabletool.io/: 轻松浏览 CSV 文件
+https://heynote.com/: 专为开发者准备的草稿本
+https://coderunnerapp.com/: 轻量的多语言编程编辑器和 IDE
+https://github.com/beaglesoftware/editor: 带语法高亮和插件的编辑器，颜值一般但能用
+https://www.spyder-ide.org/: 用 Python 编写、为 Python 打造的科学计算开发环境
+https://www.getbidbar.com/: 在菜单栏管理 bash 命令并用快捷键运行
+https://extiri.com/codemenu.html: 支持 IDE 集成和自然语言搜索的高级代码片段管理器
+https://www.conduktor.io/: Kafka 桌面客户端
+https://cutter.re/: 强大的跨平台逆向工程工具
+https://github.com/sorkila/tintpad: 菜单栏启动器，在对应仓库打开终端并启动 Claude Code、Codex 等编码智能体
+https://sindresorhus.com/icon-preview: 预览应用图标和菜单栏图标
+https://github.com/illacloud/illa-builder: 低代码内部工具搭建平台
+https://imhex.werwolv.net/: 面向逆向工程师和程序员的十六进制编辑器
+https://www.cunningo.com/locastudio/index.html: 分析、审阅和编辑应用翻译
+https://github.com/kaunteya/MacSystemColors: 在浅色和深色模式下展示全部系统颜色，方便 Cocoa 开发
+https://namequick.app/: AI 驱动的 macOS 文件重命名工具
+https://github.com/sindresorhus/Pasteboard-Viewer: 查看系统剪贴板的原始内容
+https://responsively.app/: Web 开发者必备的响应式开发调试工具
+https://ricks-apps.com/osx/sitesucker: 自动下载整个网站
+https://github.com/MarcoEidinger/SwiftPlantUML-Xcode-Extension: 在 Xcode 中为 Swift 代码生成并查看类图
+https://github.com/sindresorhus/touch-bar-simulator: 在任何 Mac 上使用 Touch Bar
+https://www.visual-paradigm.com/: 一体化 UML、SysML、BPMN 建模平台
+https://github.com/RobotsAndPencils/XcodesApp: 安装并切换多个 Xcode 版本
+https://github.com/MarcoEidinger/XCSnippetsApp: 浏览、查看和编辑 Xcode 的 Swift 与 iOS 代码片段
+https://www.emtec.com/zoc/index.html: 支持 SSH、Telnet 等协议的终端模拟器
+https://apps.apple.com/by/app/nib-unlocker/id1475697086?platform=mac: 把 .nib 转换成 .xib
+https://mockoon.com/: 几秒钟内创建模拟 API
+https://requestly.io/: 开源轻量、对 Git 友好的 API 客户端
+https://www.obdev.at/products/littlesnitch/download.html: 带世界地图可视化的网络连接监控工具
+https://github.com/GyulyVGC/sniffnet: 舒适地监控网络流量
+https://www.apidog.com/: 集 API 设计、文档、调试、Mock 和测试于一体的工作台
+https://tauri.app/: 构建体积小、速度快、更安全的跨平台应用
+https://git-cola.github.io/: 强大快速又轻量的 Git 图形界面
+https://gitbutler.com/: 支持并行与堆叠分支、无限撤销和智能体集成的 Git 客户端
+https://www.gitfox.app/: diff 体验出色、颜值在线的 Git 客户端
+https://rela.dev/: 开发者为开发者做的优雅版本控制图形界面
+https://vershd.io/: 个人免费的 Git 图形界面，支持 Windows、Mac 和 Linux
+https://naden.co/: 在 Mac 上免费无限制地运行虚拟机
+https://podman-desktop.io/: 管理容器和 Kubernetes 的开源图形工具
+https://rancherdesktop.io/: 桌面端容器管理与 Kubernetes
+https://www.qemu.org/: 免费开源的硬件模拟与虚拟化工具
+https://directory.apache.org/studio: LDAP 浏览器与 Active Directory 客户端
+https://www.beekeeperstudio.io/: 顺手的 SQL 编辑器与数据库管理工具
+https://github.com/yoichiro/chrome_mysql_admin: 管理 MySQL 的 Chrome 应用
+https://fastonosql.com/: 支持多种键值数据库的跨平台图形客户端
+https://github.com/fastogt/fastoredis: 跨平台专业 Redis 图形管理工具
+https://mingo.io/: 简单好用、功能惊艳的 MongoDB 图形客户端
+https://neo4j.com/: 领先的图数据库
+https://pgmagic.app/?ref=awesomemac: 用自然语言或 SQL 和 Postgres 对话
+https://github.com/Sequel-Ace/Sequel-Ace: 老牌工具 Sequel Pro 的持续维护版“续作”
+https://studio3t.com/: 强大的 MongoDB 图形客户端
+https://github.com/surrealdb/surrealdb: 可扩展、分布式、支持协作的文档图数据库
+https://github.com/jwilm/alacritty: 跨平台的 GPU 加速终端模拟器
+https://commandbookapp.com/: 管理长时间运行命令的终端助手（基础免费）
+https://github.com/kovidgoyal/kitty: 跨平台、快速、功能齐全的 GPU 终端模拟器
+https://www.kubeswitch.com/: 在 macOS 上最快切换 Kubernetes 上下文和命名空间的方式
+https://www.warp.dev/: 用 Rust 从头打造、像现代应用一样好用的终端
+https://wezfurlong.org/wezterm: 用 Rust 实现的 GPU 加速跨平台终端模拟器与复用器
+https://pixenapp.com/mac: 原生像素画与动画编辑器
+https://github.com/cartesiancs/nugget-app: 专注动态效果的灵活视频编辑软件
+https://quikflow.app/: 用思维导图的方式画流程图
+https://www.yworks.com/products/yed: 轻松画出高质量图表
+https://www.getcloudapp.com/: 截图、录屏与快速分享工具
+https://github.com/flameshot-org/flameshot: 强大又简单的截图软件
+https://app.prntscr.com/: 快速截图并自定义编辑
+https://github.com/vishaltelangre/Kyapchar: 简单的屏幕与麦克风录制工具
+https://www.techsmith.com/screen-capture.html: 简单强大的屏幕截图与录制软件
+https://zapier.com/zappy: 截图和录屏二合一，内置简单编辑工具
+https://sindresorhus.com/amazing-ai: 用 Stable Diffusion 从文字生成图片
+https://aspect.bildhuus.com/: 支持点对点同步的照片整理应用
+https://diffusionbee.com/: 在电脑上用 Stable Diffusion 生成 AI 图片的最简单方式
+https://exifcleaner.com/: 拖放即可移除图片和视频的 EXIF 元数据
+https://sindresorhus.com/heic-converter: 把 HEIC 图片转换成 JPEG 或 PNG
+https://iconset.io/: 免费、跨平台、快速的 SVG 图标整理器
+https://nucleoapp.com/: 图标管理器，可导入、导出、定制和转换图标库
+https://interversehq.com/qview: 极简易用的图片查看器
+https://www.techsmith.com/snagit.html: 简单强大的屏幕截图与录屏软件
+https://apps.apple.com/app/shotbuilder/id1294179975?platform=mac: 一键导出多平台应用图标
+https://boltai.com/: 漂亮强大的 Mac 版 ChatGPT 客户端
+https://github.com/runtime-org/runtime: 帮你操作网页和办公工具的 AI 助手
+https://adium.im/: 免费的 Mac 即时通讯客户端，支持多种聊天协议
+https://github.com/sindresorhus/caprine: 注重隐私的第三方 Facebook Messenger 客户端
+https://element.io/: 安全的聊天与通话应用
+https://krisp.ai/: 通话时用 AI 消除背景噪音
+https://www.larksuite.com/en_us: 新一代协作套件，聊天、会议、日历、文档和邮件一站搞定
+https://limechat.net/mac: 开源的 Mac IRC 客户端
+https://muzzleapp.com/: 屏幕共享时自动屏蔽尴尬的通知
+https://presentify.compzets.com/: 通话时在屏幕上标注、高亮光标等
+https://signal.org/download: 快速、简单、安全的私密通讯应用
+https://furnacecreek.org/unite: 原生 GroupMe Mac 客户端
+https://apps.apple.com/us/app/whatsapp-desktop/id1147396723?platform=mac: Mac App Store 上的 WhatsApp 桌面版
+https://mezon.ai/: 团队沟通新方式，免费、快速、井井有条，适合远程办公
+https://canarymail.io/: 内置 PGP 和 AI 助手的安全邮件应用
+https://github.com/vladimiry/ElectronMail: 基于 Electron 的非官方 ProtonMail 桌面客户端
+https://getmailspring.com/: 漂亮、快速且完全开源的邮件客户端
+https://tutanota.com/: 注重安全与隐私的加密邮箱
+https://mail.edison.tech/mac: 可定制、简洁好看的邮件客户端
+https://skiff.com/mail: 加密的去中心化邮箱
+https://shirt-pocket.com/SuperDuper/SuperDuperDescription.html: 轻松制作可完整启动的磁盘备份
+https://www.cleverfiles.com/: 免费数据恢复工具，另有专业版
+https://sindresorhus.com/camera-preview: 预览摄像头、拍照，或者当镜子用
+https://github.com/jellyfin/jellyfin: 自由开源的媒体服务器系统
+https://github.com/section83/MacYTDL: youtube-dl 视频下载器的 macOS 图形界面
+https://github.com/TheAcharya/MarkerData: 为 Final Cut Pro 打造的标记提取工具
+https://museeks.io/: 简单干净的跨平台音乐播放器
+https://muxie.duhnnie.com/: 支持 Apple Music、Spotify 等来源的 Last.fm 播放记录同步工具
+https://nuclear.js.org/: 自动帮你找免费音乐的流媒体播放器
+https://perian.org/: 让 QuickTime 播放常见格式的插件（已停止开发）
+https://picard.musicbrainz.org/: 用 Python 编写的跨平台音乐标签编辑器
+https://github.com/photangralenphie/MyMedia: 展示和观看本地电影、剧集库
+https://github.com/bazalp/pulp/releases: 音频采样管理器
+https://github.com/YashvardhanATRgithub/Sangeet: 带 10 段均衡器、卡拉 OK 模式和同步歌词的发烧友音乐播放器
+https://ytmdesktop.app/: 免费的跨平台 YouTube Music 桌面播放器
+https://github.com/stargatedaw/stargate: 一体化数字音频工作站与插件套件
+https://deluge-torrent.org/: 轻量、自由、跨平台的 BitTorrent 客户端
+https://fiplab.com/apps/download-shuttle-for-mac: 支持任意链接的简易下载管理器
+https://github.com/rg3/youtube-dl: 从 YouTube 等视频网站下载视频的命令行程序
+https://www.arqbackup.com/: 支持 AWS、GCP、Dropbox 等的云备份客户端
+https://www.carbonite.com/learn/how-to-backup-mac: 保护 Mac 免受常见数据丢失的云备份服务
+https://github.com/utatti/kawa: 更好用的输入法切换器
+https://github.com/lessmess-dev/touch-emoji: MacBook Pro Touch Bar 上的 Emoji 选择器
+https://github.com/Serpentiel/betterglobekey: 让 macOS 的地球键重新好用起来
+https://sindresorhus.com/aiko: 高质量的本地语音转写
+https://ottex.ai/: 按当前应用或网站自动排版文字的 AI 听写工具
+https://spokenly.app/: 支持 100 多种语言、离线模式和 AI 排版的语音转文字工具
+https://tambourinevoice.com/: 开源可定制、在任何应用里都能用的 AI 语音听写
+https://epicenter.md/whispering: 支持多服务商、AI 改写和快捷键的语音转文字工具
+https://willowvoice.com/: 自动润色、匹配风格并优化降噪的 AI 听写工具
+https://minbrowser.org/: 快速、极简、保护隐私的浏览器
+https://www.orabrowser.com/: 带空间、标签管理和垂直侧边栏的开源浏览器
+https://browser.kagi.com/: 轻量的 WebKit 浏览器，支持 Chrome 和 Firefox 扩展
+https://www.qutebrowser.org/: 基于 Python 和 Qt、键盘驱动的 Vim 风格浏览器
+https://www.torproject.org/projects/torbrowser.html: 专为匿名浏览设计的隐私浏览器
+https://mullvad.net/en/download/browser: 专注反指纹追踪的隐私浏览器
+https://browser.yandex.com/: Yandex 出品的快速安全浏览器
+https://gikken.co/mate-translate/mac: 在 Safari 和任意应用中进行 103 种语言互译
+https://cryptomator.org/: 多平台的云端文件透明客户端加密
+https://objective-see.com/products/lockdown.html: 审计并修复安全配置的开源工具
+https://getlockpaw.com/: 菜单栏屏幕守护，用快捷键锁定和解锁屏幕
+https://paretosecurity.com/: 自动检查 Mac 基础安全设置的菜单栏应用
+https://github.com/alichtman/stronghold: 在终端里轻松配置 macOS 安全设置
+https://www.mothersruin.com/software/SuspiciousPackage: 检查 macOS 安装包内容的工具
+https://getdashvpn.com/: 支持 VLESS、Shadowsocks 和 HTTPS 订阅的智能分流代理客户端
+https://jumpervpn.com/: 安全快速的多平台 VPN 代理客户端
+https://nadenco.gumroad.com/l/rerouteme: 一键配置 macOS 代理的简单应用
+https://github.com/zhuhaow/SpechtLite: 基于规则的 macOS 代理应用
+https://github.com/mobrava/Clipbara: 类似 Paste 的免费剪贴板管理器，支持固定板和快速预览
+https://getclipboard.app/: 简单易用的跨平台终端剪贴板管理器
+https://sindresorhus.com/pure-paste: 默认以纯文本粘贴
+https://github.com/praneeth552/clipflow: 终端风格导航的免费剪贴板历史管理器
+https://github.com/designsbymuzeer/Bye-Mac-App: 在菜单栏快速查看并结束运行中的进程
+https://sindresorhus.com/dato: 更好用的菜单栏时钟，带日历、日程和时区
+https://github.com/Mortennn/Dozer: 隐藏 macOS 菜单栏图标
+https://sindresorhus.com/folder-peek: 从菜单栏快速打开文档、文件夹和应用
+https://apps.apple.com/gb/app/hue-in-the-menu/id1534707384?platform=mac: 在菜单栏管理飞利浦 Hue 灯光，支持多房间
+https://getlater.app/: 一键保存当前 Mac 应用状态，稍后恢复
+https://github.com/lovach/Lunavect: 在菜单栏和桌面小组件显示 Claude Code、Codex 会话状态与用量
+https://github.com/lukebuild/LuxShot: 原生、隐私优先的菜单栏 OCR 工具
+https://meetingbar.onrender.com/: 菜单栏里的日历会议提醒
+https://sindresorhus.com/menu-bar-calendar: 菜单栏里的月历
+https://sindresorhus.com/one-thing: 在菜单栏放一个任务或目标
+https://fireball.studio/oneswitch: 在菜单栏添加各种系统开关
+https://sindresorhus.com/pandan: 菜单栏里的时间感知工具
+https://quickgif.app/: 快速查找和分享 GIF
+https://github.com/DamascenoRafael/reminders-menubar: 在菜单栏查看和管理提醒事项
+https://rewritebar.com/: 菜单栏里的 AI 写作润色助手
+https://sindresorhus.com/second-clock: 在菜单栏显示另一个时区的时钟
+https://github.com/FelixKratz/SketchyBar: 高度可定制的 macOS 状态栏替代品
+https://sindresorhus.com/spaced: 把菜单栏图标分组整理
+https://github.com/swiftbar/SwiftBar: 强大的 macOS 菜单栏定制工具
+https://textsniper.app/: 菜单栏 OCR 工具，随处识别并复制文字
+https://github.com/ivoronin/TomatoBar: 菜单栏里最整洁的番茄钟
+https://sindresorhus.com/utc-time: 在菜单栏或小组件显示 UTC 时间
+https://sindresorhus.com/week-number: 在菜单栏显示当前周数
+https://github.com/niteoweb/work-hours-mac: 在菜单栏记录工作时长
+https://macpaw.com/cleanmymac: 清理垃圾、查杀恶意软件，让 Mac 更快更整洁
+https://github.com/AlexTkDev/MacOSCleaner: 免费开源的 macOS 清理工具，带磁盘分析和应用卸载
+https://leoanimesh.github.io/OpenClean: 免费开源的 Mac 清理工具，删除前逐项解释并可恢复
+https://www.fileside.app/: 支持无限分栏的现代平铺式文件管理器
+https://foldersapp.dev/: 带可展开目录树、类似 Windows 资源管理器的文件管理器
+https://www.mucommander.com/: 轻量的双栏文件管理器
+https://devknife.app/: 处理网络扫描、JSON 格式化等数十种日常开发任务的原生应用
+https://github.com/ObuchiYuki/DevToysMac: 帮开发者处理日常小任务的离线工具箱
+https://www.balena.io/etcher: 安全轻松地把系统镜像写入 SD 卡和 U 盘
+https://github.com/rlxone/Equinox: 制作 macOS 动态壁纸
+https://lo.cafe/lo-rain: 在桌面和应用上下一场可定制的雨
+https://nextdns.io/: 面向现代互联网的 DNS 防火墙
+https://sindresorhus.com/plash: 把任意网站设为桌面壁纸
+https://github.com/dteoh/SlowQuitApps: 给 Cmd-Q 加 1 秒延迟，防止误退出
+https://sindresorhus.com/speediness: 测试网速
+https://github.com/Swift-open-source/UltraTabSaver: 开源的 Safari 标签页管理器
+https://github.com/gkpln3/CapsLockNoDelay: 去掉大写锁定键的激活延迟
+https://focusedwork.app/: 简单灵活的专注计时器
+https://lunatask.app/: 集待办、习惯与情绪追踪、日记和笔记于一体的加密应用
+https://sindresorhus.com/one-task: 一次只专注一件事
+https://tomato2.app/: 简洁好看的番茄钟
+https://ticktick.com/: 简单高效的待办清单和任务管理工具
+https://activitywatch.net/: 跨平台、可扩展、注重隐私的时间追踪工具
+https://indiegoodies.com/atomic: 养成好习惯、戒掉坏习惯的习惯追踪应用
+https://github.com/rewhex/better-launchpad: 可定制、搜索快速的应用启动器
+https://cerebroapp.com/: 开源的效率启动器
+https://www.choosyosx.com/: 按规则决定链接在哪个浏览器、以什么方式打开
+https://www.plentycom.jp/en/cursorsense/index.html: 可调节加速度曲线等参数的鼠标与触控板驱动
+https://sindresorhus.com/day-progress: 在菜单栏显示今天还剩多少时间
+https://aptonic.com/: 弹出可自定义的动作网格，可用 Ruby 和 Python 编写脚本
+https://focusfirewall.com/: 工作时屏蔽社交媒体等干扰的极简专注应用
+https://hazeover.com/: 调暗后台窗口，让你专注于当前任务
+https://github.com/zenangst/KeyboardCowboy: macOS 缺失的键盘快捷键工具
+https://apple.co/3PLI2AH: 使用径向菜单的应用启动与切换器
+https://www.lazy-app.com/: 用键盘命令直接管理 Mac 上的一切
+https://linearmouse.app/: 完全掌控鼠标的速度、滚动方向、指针等设置
+https://macaify.com/: 轻量、干净、键盘优先的 ChatGPT 快捷工具
+https://macmousefix.com/: 让你的鼠标更好用的简单方法
+https://sindresorhus.com/memo-widget: 桌面便利贴小组件
+https://loshadki.app/openin4: 掌控用哪个应用打开文件和链接
+https://palettebrain.com/: 按下快捷键即可在任意应用中使用 ChatGPT
+https://www.pie-menu.com/: 根据当前应用定制的径向工具菜单
+https://apps.apple.com/us/app/perplexity-ask-anything/id6714467650?platform=mac: AI 驱动的搜索与发现
+https://github.com/jet8a/pomodoro-cycle-app: 番茄钟追踪工具
+https://github.com/koekeishiya/skhd: macOS 简易热键守护进程
+https://www.dejal.com/timeout: 简单的休息提醒，支持微休息和灵活定制
+https://timescribe.app/: 简单免费的工作时间记录工具
+https://trello.com/: 用看板组织项目的协作工具
+https://sindresorhus.com/velja: 浏览器选择器，让链接在指定浏览器或桌面应用中打开
+https://github.com/nikitabobko/AeroSpace: 类 i3 的 macOS 平铺窗口管理器
+https://alt-tab-macos.netlify.app/: 带窗口预览的开源窗口切换器
+https://assignee.app/: 简单即时的应用切换器
+https://dockdoor.net/: 免费开源的窗口预览和 Alt-Tab 工具
+https://www.7sols.com/dissolv: 自动隐藏和关闭不活跃的应用
+https://finestructure.co/hummingbird: 无需点击，在窗口任意位置移动和调整窗口
+https://thelasso.app/: 直观易用的网格式窗口管理器
+https://github.com/BarutSRB/OmniWM: 受 Niri 和 Hyprland 启发、带动画的平铺窗口管理器
+https://sidebarapp.net/: 现代化的程序坞替代品
+https://keepassxc.org/: 免费开源的跨平台密码管理器
+https://getswifty.pro/: 免费离线优先的密码管理器，支持 macOS、Windows 和 Linux
+https://sindresorhus.com/command-x: 在访达中剪切粘贴文件
+https://www.stclairsoft.com/DefaultFolderX/index.html: 在任意应用中快速访问常用文件和文件夹
+https://www.fileminutes.com/: 查找文件并执行操作，一站搞定
+https://synappser.github.io/apps/finderfix: 一劳永逸地固定访达窗口的大小和位置
+https://sindresorhus.com/hyperduck: 接收来自 iOS 和 visionOS 设备的链接
+https://sindresorhus.com/shareful: 给系统共享菜单加上复制、保存和打开等动作
+https://mousejigglermac.com/: 防止 Mac 进入睡眠的鼠标摇晃器
+https://doesitarm.com/apple-silicon-app-test: 检查应用对 Apple 芯片的兼容性
+https://apps.kpchew.com/extendfs: 无需内核扩展，在 macOS Sequoia 及以上只读访问 Linux ext2/3/4
+https://grandperspectiv.sourceforge.net/: 用树状图可视化磁盘占用
+https://github.com/zenangst/Gray: 按应用切换浅色或深色模式
+https://github.com/NullPointerDepressiveDisorder/MiddleDrag: 用三指手势实现中键点击和中键拖动
+https://sleepr.app/: 给 macOS 找回睡眠定时器
+https://sveinbjorn.org/sloth: 显示所有进程打开的文件、目录、套接字、管道和设备
+https://github.com/probablykasper/time-machine-inspector: 找出是谁占满了时间机器备份
+https://github.com/KrauseFx/overkill-for-mac: 连接 iPhone 时阻止 iTunes 自动打开
+https://github.com/sbarex/QLMarkdown: Markdown 文件的快速查看扩展
+https://github.com/sbarex/SourceCodeSyntaxHighlight: 为源代码文件提供语法高亮的快速查看扩展
+https://corkmac.app/: 用 SwiftUI 编写、功能完整的 Homebrew 图形界面
+https://alternativeto.net/: 寻找替代软件的社区，也能查其他平台的替代品
+https://www.quora.com/: 问答社区，搜搜别人的软件推荐
+https://www.reddit.com/: 综合社区，Mac 相关板块里有大量软件讨论
+https://www.macupdate.com/: 老牌 Mac 软件下载与更新信息站
+https://www.macstories.net/: 关注 Apple 生态与 Mac 应用的深度评测博客
+https://lifehacker.com/: 效率技巧与软件推荐网站
+https://www.producthunt.com/topics/mac: Product Hunt 上的 Mac 新品专题

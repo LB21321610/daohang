@@ -225,6 +225,10 @@ button {
     background-color 200ms var(--motion-ease);
 }
 
+.nav-item span {
+  white-space: nowrap;
+}
+
 .nav-item:hover {
   background: var(--glass-hover);
 }
@@ -365,6 +369,10 @@ button {
   grid-template-columns: minmax(0, 1fr) 104px;
   align-items: center;
   min-height: 55px;
+  /* Long lists (awesome-mac has 1000+ rows) skip layout and paint for rows off screen.
+     The placeholder is the content box: 55px row minus the 1px bottom border, so section jumps land exactly. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 54px;
   background: transparent;
   border-bottom: 1px solid var(--color-border);
   transition: background-color 200ms var(--motion-ease);
@@ -723,6 +731,11 @@ button {
   outline-offset: 2px;
 }
 
+/* Rows clip painting (content-visibility), so draw the ring inside the row. */
+.site-link:focus-visible {
+  outline-offset: -2px;
+}
+
 .site-section {
   scroll-margin-top: var(--section-scroll-offset);
 }
@@ -756,6 +769,53 @@ button {
   color: var(--color-text-muted);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
+}
+
+.page-credit {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 8px 0 0;
+  padding: 0 7px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.page-credit-icon {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--color-icon-mono);
+}
+
+.page-credit a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.page-credit a:hover {
+  text-decoration: underline;
+}
+
+.page-credit a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.site-subsection {
+  margin: 0;
+  padding: 18px 7px 8px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .section-jump {
