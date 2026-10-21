@@ -95,6 +95,10 @@ export function compileCatalog(categoriesYaml: string, siteDocuments: SiteDocume
         );
       }
 
+      if (input.subsection && !input.section) {
+        throw new Error(`${document.path}[${index}]: subsection ${input.subsection} requires a section`);
+      }
+
       ids.add(input.id);
       if (input.linkStatus === "unavailable") {
         sites.push(input);

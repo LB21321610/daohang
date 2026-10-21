@@ -553,11 +553,13 @@ describe("compileCatalog", () => {
     const softwareSites = catalog.sites.filter((site) =>
       ["windows", "mac", "cross-platform"].includes(site.category),
     );
-    const legacySites = catalog.sites.filter((site) =>
+    // The imported awesome-mac column is locked separately in awesome-mac.test.ts.
+    const curatedSites = catalog.sites.filter((site) => site.category !== "awesome-mac");
+    const legacySites = curatedSites.filter((site) =>
       !["games", "video", "media", "audio"].includes(site.category),
     );
 
-    expect(catalog.sites).toHaveLength(236);
+    expect(curatedSites).toHaveLength(236);
     expect(legacySites).toHaveLength(29);
     expect(legacySites.every((site) => site.linkStatus !== "unavailable")).toBe(true);
     expect(new Set(legacySites.map((site) => `${site.reviewStatus}/${site.linkStatus}`))).toEqual(

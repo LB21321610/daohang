@@ -13,7 +13,8 @@ test("renders the navigation shell and supports global search", async ({ page },
   await expect(page.getByRole("heading", { name: "常用" })).toBeVisible();
 
   await page.getByPlaceholder("搜索网站、分类或标签").fill("chatgpt.com");
-  await expect(page.getByRole("link", { name: /ChatGPT/ })).toBeVisible();
+  // The awesome-mac column also lists "ChatGPT Atlas" on chatgpt.com, so match the exact name.
+  await expect(page.getByRole("link", { name: /^ChatGPT，/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /GitHub/ })).toHaveCount(0);
 });
 
@@ -359,4 +360,38 @@ test("focuses search from the keyboard and clears it", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(input).toHaveValue("");
   await expect(page.getByRole("heading", { name: "常用" })).toBeVisible();
+});
+
+test("browses the imported awesome-mac column on desktop and phone", async ({ page }, testInfo) => {
+  await page.goto("./");
+  const navItem = page.getByRole("button", { name: "Awesome Mac" });
+  await navItem.scrollIntoViewIfNeeded();
+  await navItem.click();
+
+  await expect(page.getByRole("heading", { level: 1, name: "Awesome Mac" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "jaywcjlove/awesome-mac" })).toHaveAttribute(
+    "href",
+    "https://github.com/jaywcjlove/awesome-mac",
+  );
+  if (testInfo.project.name === "desktop") {
+    // The longer label must stay on one line in the sidebar.
+    expect((await navItem.boundingBox())!.height).toBeLessThanOrEqual(56);
+  }
+
+  const jumpBar = page.getByRole("navigation", { name: "小节" });
+  await expect(jumpBar.getByRole("link")).toHaveCount(25);
+  await jumpBar.getByRole("link", { name: /^实用工具/ }).click();
+  const heading = page.getByRole("heading", { level: 2, name: "实用工具" });
+  await expect(heading).toBeFocused();
+  await expect(heading).toBeInViewport();
+  await expect(page.getByRole("heading", { level: 3, name: "窗口管理" })).toBeAttached();
+
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+
+  await page.getByPlaceholder("搜索网站、分类或标签").fill("NetNewsWire");
+  await expect(page.getByRole("link", { name: /^NetNewsWire，/ })).toHaveAttribute("href", "https://netnewswire.com/");
 });
