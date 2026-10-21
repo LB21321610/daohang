@@ -4,6 +4,7 @@ import {
   Archive,
   Brain,
   ChatCircleDots,
+  ChatsCircle,
   Compass,
   Desktop,
   FilmStrip,
@@ -19,6 +20,7 @@ import {
   NotionLogo,
   OpenAiLogo,
   PaintBrush,
+  Question,
   ShieldWarning,
   Sparkle,
   SquaresFour,
@@ -41,6 +43,7 @@ import generatedCatalog from "../generated/sites.json";
 import { searchSites } from "../domain/search";
 import type { CategoryId, LinkedSite, Site, SiteCatalog } from "../domain/site";
 import { readFavoriteIds, toggleFavorite } from "../features/favorites/favoriteStore";
+import { getBrowserStorage, readStorageItem, writeStorageItem } from "../features/storage/browserStorage";
 
 const RISK_ACKNOWLEDGEMENT_KEY = "personal-nav:risk-ack:v1";
 const MOTION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -65,8 +68,10 @@ interface Section {
 const iconByName: Record<string, Icon> = {
   "app-window": AppWindow,
   anthropic: ChatCircleDots,
+  apple: AppleLogo,
   archive: Archive,
   bilibili: Desktop,
+  chat: ChatsCircle,
   database: SquaresFour,
   github: GithubLogo,
   google: GoogleLogo,
@@ -76,6 +81,7 @@ const iconByName: Record<string, Icon> = {
   openai: OpenAiLogo,
   perplexity: Sparkle,
   windows: WindowsLogo,
+  zhihu: Question,
 };
 
 const navIconById: Record<CategoryId, Icon> = {
@@ -91,11 +97,11 @@ const navIconById: Record<CategoryId, Icon> = {
 };
 
 function getStoredFavorites(): string[] {
-  return typeof window === "undefined" ? [] : readFavoriteIds(window.localStorage);
+  return readFavoriteIds(getBrowserStorage("localStorage"));
 }
 
 function getRiskAcknowledgement(): boolean {
-  return typeof window !== "undefined" && window.sessionStorage.getItem(RISK_ACKNOWLEDGEMENT_KEY) === "true";
+  return readStorageItem(getBrowserStorage("sessionStorage"), RISK_ACKNOWLEDGEMENT_KEY) === "true";
 }
 
 function prefersReducedMotion(): boolean {
@@ -396,6 +402,10 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const pendingFavoriteIdRef = useRef<string | null>(null);
   const modalActionHandledRef = useRef(false);
   const previousContentStateRef = useRef<{ mode: ContentMode; view: ViewId } | null>(null);
+  // Set to null after a failed write so later toggles build on the in-memory list.
+  const favoriteStorageRef = useRef(getBrowserStorage("localStorage"));
+  const trimmedQuery = query.trim();
+  const isSearching = trimmedQuery !== "";
 
   const closeModal = useCallback(() => {
     if (prefersReducedMotion()) {
@@ -421,8 +431,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   );
 
   const sections = useMemo<Section[]>(() => {
-    const trimmedQuery = query.trim();
-    if (trimmedQuery) {
+    if (isSearching) {
       const sites = searchSites(catalog.sites, catalog.categories, trimmedQuery);
       return [
         {
@@ -493,14 +502,25 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     }
 
     return [
-      ...(favoriteSites.length ? [{ id: "favorites", title: "我的收藏", sites: favoriteSites }] : []),
+      ...(favoriteSites.length
+        ? [
+            {
+              id: "favorites",
+              title: "我的收藏",
+              sites: favoriteSites,
+              showsDisclaimer: favoriteSites.some((site) => site.riskLevel === "high"),
+            },
+          ]
+        : []),
       ...[...homeGroups.values()].sort((left, right) => left.order - right.order),
     ];
-  }, [activeView, catalog.categories, catalog.sites, categoryById, favoriteIds, query]);
+  }, [activeView, catalog.categories, catalog.sites, categoryById, favoriteIds, isSearching, trimmedQuery]);
 
   const handleFavorite = (siteId: string) => {
+    const { ids, persisted } = toggleFavorite(favoriteStorageRef.current, siteId, favoriteIds);
+    if (!persisted) favoriteStorageRef.current = null;
     pendingFavoriteIdRef.current = siteId;
-    setFavoriteIds(toggleFavorite(window.localStorage, siteId));
+    setFavoriteIds(ids);
   };
 
   useLayoutEffect(() => {
@@ -537,7 +557,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const handleContinue = (site: LinkedSite) => {
     if (modalActionHandledRef.current) return;
     modalActionHandledRef.current = true;
-    window.sessionStorage.setItem(RISK_ACKNOWLEDGEMENT_KEY, "true");
+    writeStorageItem(getBrowserStorage("sessionStorage"), RISK_ACKNOWLEDGEMENT_KEY, "true");
     setRiskAcknowledged(true);
     window.open(site.url, "_blank", "noopener,noreferrer");
     closeModal();
@@ -550,7 +570,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
       id: category.id === "common" ? ("home" as const) : category.id,
       label: category.navLabel,
     }));
-  const contentMode: ContentMode = query.trim()
+  const contentMode: ContentMode = isSearching
     ? sections[0]?.sites.length
       ? "search-results"
       : "search-empty"
@@ -620,8 +640,8 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
     navigation.style.setProperty("--nav-indicator-width", `${activeButton.offsetWidth}px`);
     navigation.style.setProperty("--nav-indicator-height", `${activeButton.offsetHeight}px`);
     navigation.dataset.indicatorReady = "true";
-    navigation.dataset.indicatorVisible = query ? "false" : "true";
-  }, [activeView, query]);
+    navigation.dataset.indicatorVisible = isSearching ? "false" : "true";
+  }, [activeView, isSearching]);
 
   useLayoutEffect(() => {
     positionNavIndicator();
@@ -643,7 +663,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
           <span aria-hidden="true" className="nav-indicator" data-testid="nav-indicator" />
           {navItems.map((item) => {
             const NavIcon = navIconById[item.categoryId];
-            const isActive = activeView === item.id && !query;
+            const isActive = activeView === item.id && !isSearching;
             return (
               <button
                 aria-current={isActive ? "page" : undefined}
@@ -687,7 +707,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
         </header>
 
         <main className="main-content" data-testid="content-stage" ref={contentRef}>
-          {query.trim() && sections[0]?.sites.length === 0 ? (
+          {contentMode === "search-empty" ? (
             <div className="empty-state">
               <MagnifyingGlass size={32} />
               <h2>没有找到匹配的网站</h2>

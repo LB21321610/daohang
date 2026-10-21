@@ -350,6 +350,7 @@ button {
   background: #ffffff;
 }
 
+.site-icon--apple,
 .site-icon--github,
 .site-icon--notion {
   color: #101318;
@@ -387,6 +388,11 @@ button {
 
 .site-icon--bilibili {
   color: #fb7299;
+  background: #ffffff;
+}
+
+.site-icon--zhihu {
+  color: #0066ff;
   background: #ffffff;
 }
 

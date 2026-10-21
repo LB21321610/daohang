@@ -234,9 +234,9 @@ const catalog: SiteCatalog = {
 
 describe("App", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     localStorage.clear();
     sessionStorage.clear();
-    vi.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -345,6 +345,59 @@ describe("App", () => {
     expect(within(unavailable).getByText("暂无稳定链接")).toBeInTheDocument();
     expect(within(unavailable).queryByRole("link")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "收藏 Legacy Game Tool" })).not.toBeInTheDocument();
+  });
+
+  it("renders and keeps working when the browser blocks site storage", async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    const blocked = () => {
+      throw new DOMException("denied", "SecurityError");
+    };
+    vi.spyOn(window, "localStorage", "get").mockImplementation(blocked);
+    vi.spyOn(window, "sessionStorage", "get").mockImplementation(blocked);
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
+    expect(screen.getByRole("button", { name: "取消收藏 GitHub" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: /AppNee/ }));
+    await user.click(screen.getByRole("button", { name: "继续访问" }));
+    expect(open).toHaveBeenCalledWith("https://appnee.com/", "_blank", "noopener,noreferrer");
+  });
+
+  it("keeps in-memory favorites when storage writes fail", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("full", "QuotaExceededError");
+    });
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "收藏 GitHub" }));
+    await user.click(screen.getByRole("button", { name: "收藏 AppNee" }));
+
+    expect(screen.getByRole("button", { name: "取消收藏 GitHub" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "取消收藏 AppNee" })).toBeInTheDocument();
+  });
+
+  it("treats a whitespace-only query as browsing", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "AI" }));
+    await user.type(screen.getByPlaceholderText("搜索网站、分类或标签"), "   ");
+
+    expect(screen.getByRole("button", { name: "AI" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("navigation", { name: "网站分类" })).toHaveAttribute("data-indicator-visible", "true");
+  });
+
+  it("shows the warning on the favorites section when it holds a high-risk site", async () => {
+    const user = userEvent.setup();
+    render(<App catalog={catalog} />);
+
+    await user.click(screen.getByRole("button", { name: "收藏 AppNee" }));
+
+    const favorites = screen.getByRole("region", { name: "我的收藏" });
+    expect(within(favorites).getByRole("button", { name: /外部站点，请自行甄别/ })).toBeInTheDocument();
   });
 
   it("stores a favorite without opening the site", async () => {
