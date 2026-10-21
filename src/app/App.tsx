@@ -664,6 +664,10 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
 
     // The window may be scrolled deep into a long list; new content should start at its top.
     window.scrollTo({ top: 0, behavior: "instant" });
+    // An instant scroll does not stop a section jump's smooth scroll from landing one more frame.
+    requestAnimationFrame(() => {
+      if (window.scrollY !== 0) window.scrollTo({ top: 0, behavior: "instant" });
+    });
     if (!categoryChanged && !searchStateChanged) return;
 
     contentAnimationRef.current?.cancel();
