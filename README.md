@@ -111,7 +111,7 @@ npm run content:build
 
 - 描述里的“清单版本”是导入清单时的版本快照，**不是**外站当前最新版，也不保证还能下
 - 套装算一条，单品各算各的
-- Logic Pro 用的是 Mac App Store 官方页；5 个已经下架的详情页换成了对应产品官网
+- Logic Pro 指向 Appstorrent 详情页；5 个已经下架的详情页换成了对应产品官网
 - KOMPLETE FX Bundle 的网址看着像 XLN Audio 的历史链接，别慌，已经核对过页面标题、开发者和版本，确实是 KOMPLETE FX 👌
 
 ### 🍏 Awesome Mac 专栏
@@ -263,7 +263,7 @@ A few things that look weird but aren't:
 
 - “清单版本” in a description is the version from the supplied list. It's a snapshot, **not** a promise about the latest release or that it's still downloadable
 - A bundle counts as one record; individual products are listed separately
-- Logic Pro points to its official Mac App Store page; five removed detail pages now point to the official product pages
+- Logic Pro points to its Appstorrent detail page; five removed detail pages now point to the official product pages
 - KOMPLETE FX Bundle still uses an old XLN Audio URL. Don't panic: page title, developer, and version were all checked and it really is KOMPLETE FX 👌
 
 ### 🍏 Awesome Mac column

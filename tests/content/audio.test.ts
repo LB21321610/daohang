@@ -47,15 +47,15 @@ describe("audio catalog", () => {
     const official = audioSites.filter((site) => !thirdParty.includes(site));
 
     expect(logicPro).toMatchObject({
-      url: "https://apps.apple.com/us/app/logic-pro/id634148309?mt=12",
+      url: "https://appstorrent.ru/36-logic-pro.html",
       section: "daw-dj",
-      riskLevel: "standard",
-      reviewStatus: "verified",
+      riskLevel: "high",
+      reviewStatus: "unverified",
       linkStatus: "verified",
     });
-    expect(official).toHaveLength(6);
+    expect(official).toHaveLength(5);
     expect(official.every((site) => site.riskLevel === "standard" && site.reviewStatus === "verified")).toBe(true);
-    expect(thirdParty).toHaveLength(124);
+    expect(thirdParty).toHaveLength(125);
     expect(thirdParty.every((site) => site.riskLevel === "high" && site.reviewStatus === "unverified")).toBe(true);
     expect(audioSites.every((site) => site.linkStatus === "verified")).toBe(true);
   });
