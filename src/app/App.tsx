@@ -451,7 +451,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const favoriteAnimationRef = useRef<Animation | null>(null);
   const pendingFavoriteIdRef = useRef<string | null>(null);
   const modalActionHandledRef = useRef(false);
-  const previousContentStateRef = useRef<{ mode: ContentMode; view: ViewId } | null>(null);
+  const previousContentStateRef = useRef<{ mode: ContentMode; query: string; view: ViewId } | null>(null);
   // Set to null after a failed write so later toggles build on the in-memory list.
   const favoriteStorageRef = useRef(getBrowserStorage("localStorage"));
   // Results render from a deferred copy so typing stays responsive across 1500+ sites.
@@ -652,17 +652,19 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
   const resultCount = isSearching ? (sections[0]?.sites.length ?? 0) : 0;
 
   useLayoutEffect(() => {
-    const currentState = { mode: contentMode, view: activeView };
+    const currentState = { mode: contentMode, query: trimmedQuery, view: activeView };
     const previousState = previousContentStateRef.current;
     previousContentStateRef.current = currentState;
     if (!previousState) return;
 
     const categoryChanged = previousState.view !== activeView;
     const searchStateChanged = previousState.mode !== contentMode;
-    if (!categoryChanged && !searchStateChanged) return;
+    const queryChanged = previousState.query !== trimmedQuery;
+    if (!categoryChanged && !searchStateChanged && !queryChanged) return;
 
-    // A section jump leaves the window scrolled down; a new category should start at its top.
-    if (categoryChanged) window.scrollTo({ top: 0, behavior: "instant" });
+    // The window may be scrolled deep into a long list; new content should start at its top.
+    window.scrollTo({ top: 0, behavior: "instant" });
+    if (!categoryChanged && !searchStateChanged) return;
 
     contentAnimationRef.current?.cancel();
     contentAnimationRef.current = null;
@@ -684,7 +686,7 @@ export function App({ catalog = generatedCatalog as SiteCatalog }: AppProps) {
         easing: MOTION_EASING,
       },
     );
-  }, [activeView, contentMode]);
+  }, [activeView, contentMode, trimmedQuery]);
 
   useEffect(() => {
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

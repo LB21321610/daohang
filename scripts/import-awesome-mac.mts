@@ -1,6 +1,8 @@
 import { readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { parse } from "yaml";
+
 import {
   AWESOME_MAC_CATEGORY,
   buildAwesomeMacSites,
@@ -44,7 +46,10 @@ const [englishReadme, chineseReadme, descriptionsYaml, auditYaml, categoriesYaml
 ]);
 
 // Sites already curated elsewhere keep their place; the import skips their URLs.
-const otherDocuments = documents.filter((document) => !document.path.endsWith(`/${AWESOME_MAC_CATEGORY}.yml`));
+const isAwesomeMacDocument = (document: { path: string }) => document.path.endsWith(`/${AWESOME_MAC_CATEGORY}.yml`);
+const otherDocuments = documents.filter((document) => !isAwesomeMacDocument(document));
+const previousYaml = documents.find(isAwesomeMacDocument)?.yaml;
+const previousSites = (previousYaml ? parse(previousYaml) : null) as Array<{ id: string; url: string }> | null;
 const reservedUrls = compileCatalog(categoriesYaml, otherDocuments).sites.flatMap((site) =>
   site.linkStatus === "unavailable" ? [] : [site.url],
 );
@@ -58,6 +63,8 @@ const audit = parseLinkAudit(auditYaml);
 const sites = buildAwesomeMacSites(entries, {
   audit,
   descriptions: parseDescriptions(descriptionsYaml),
+  onWarning: (message) => console.warn(message),
+  previousIds: (previousSites ?? []).map((site) => [site.url, site.id] as const),
   reservedUrls,
 });
 

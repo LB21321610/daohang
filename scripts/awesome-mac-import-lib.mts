@@ -134,6 +134,9 @@ export interface BuildOptions {
   audit?: AwesomeMacLinkAudit;
   /** Normalized URLs that already live elsewhere in the catalog. */
   reservedUrls?: Iterable<string>;
+  /** IDs from the previous import keyed by published URL; favourites are stored by ID, so they must not move. */
+  previousIds?: Iterable<readonly [url: string, id: string]>;
+  onWarning?: (message: string) => void;
 }
 
 export function awesomeMacSections(): SectionDefinition[] {
@@ -245,8 +248,7 @@ export function parseAwesomeMacMarkdown(markdown: string): AwesomeMacEntry[] {
 
     const subsection = subsectionHeading ? subsectionByHeading[subsectionHeading] : undefined;
     for (const link of parseBulletLinks(line)) {
-      // The catalog only links over HTTPS; every upstream entry currently uses it anyway.
-      const url = normalizeAwesomeMacUrl(link.url)?.replace(/^http:/, "https:");
+      const url = normalizeAwesomeMacUrl(link.url);
       if (!url) continue;
 
       const tags = [section.label, ...(subsection ? [subsection] : [])];
@@ -314,12 +316,19 @@ export function buildAwesomeMacSites(entries: AwesomeMacEntry[], options: BuildO
   const moved = new Map(options.audit?.moved.map((item) => [item.from, item.to]) ?? []);
   const highRisk = new Set(options.audit?.highRisk.map((item) => item.url) ?? []);
   const byUrl = new Map<string, AwesomeMacSite>();
-  const usedIds = new Set<string>();
+  const previousIds = new Map(options.previousIds ?? []);
+  // Retired IDs stay reserved too, so a new app never inherits a removed app's favourites.
+  const usedIds = new Set(previousIds.values());
 
   for (const entry of entries) {
     if (removed.has(entry.url)) continue;
     const url = moved.get(entry.url) ?? entry.url;
     if (reserved.has(url)) continue;
+    // The catalog only links over HTTPS; guessing an upgrade could publish a dead link.
+    if (!url.startsWith("https:")) {
+      options.onWarning?.(`Skipped ${entry.name}: ${url} is not HTTPS; add a moved entry to the link audit`);
+      continue;
+    }
 
     const existing = byUrl.get(url);
     if (existing) {
@@ -328,10 +337,13 @@ export function buildAwesomeMacSites(entries: AwesomeMacEntry[], options: BuildO
       continue;
     }
 
-    const baseId = `${ID_PREFIX}${slugify(entry.name, url)}`;
-    let id = baseId;
-    for (let suffix = 2; usedIds.has(id); suffix += 1) id = `${baseId}-${suffix}`;
-    usedIds.add(id);
+    let id = previousIds.get(url) ?? previousIds.get(entry.url);
+    if (!id) {
+      const baseId = `${ID_PREFIX}${slugify(entry.name, url)}`;
+      id = baseId;
+      for (let suffix = 2; usedIds.has(id); suffix += 1) id = `${baseId}-${suffix}`;
+      usedIds.add(id);
+    }
 
     const description =
       options.descriptions?.[entry.url] ?? (entry.description || `awesome-mac 收录的 ${entry.name}`);

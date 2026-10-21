@@ -138,12 +138,15 @@ export async function probeUrl(rawUrl: string, options: ProbeOptions = {}): Prom
       );
     }
 
+    // Time spent queued behind the per-domain throttle is not part of the request budget.
+    const waitStartedAt = Date.now();
     try {
       await resolvedOptions.beforeRequest?.(currentUrl);
     } catch (error) {
       return errorProbe(requestedUrl, error);
     }
-    deadline ??= Date.now() + resolvedOptions.totalTimeoutMs;
+    if (deadline === undefined) deadline = Date.now() + resolvedOptions.totalTimeoutMs;
+    else deadline += Date.now() - waitStartedAt;
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) {
       return errorProbe(requestedUrl, Object.assign(new Error("total request timeout"), { code: "ETOTALTIMEOUT" }));
@@ -152,108 +155,120 @@ export async function probeUrl(rawUrl: string, options: ProbeOptions = {}): Prom
     const response = await new Promise<LinkProbe>((resolve) => {
       let settled = false;
       let connectionTimer: ReturnType<typeof setTimeout> | undefined;
-      const totalTimer = setTimeout(() => {
-        clientRequest.destroy(Object.assign(new Error("total request timeout"), { code: "ETOTALTIMEOUT" }));
-      }, remainingMs);
+      let totalTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 
       const finish = (result: LinkProbe) => {
         if (settled) return;
         settled = true;
-        clearTimeout(totalTimer);
+        if (totalTimer) clearTimeout(totalTimer);
         if (connectionTimer) clearTimeout(connectionTimer);
         resolve(result);
       };
 
-      const clientRequest = transport.get(
-        parsed,
-        {
-          headers: {
-            accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
-            "accept-encoding": "identity",
-            "user-agent": "PersonalNavigationLinkChecker/1.0",
+      let clientRequest: http.ClientRequest;
+      try {
+        clientRequest = transport.get(
+          parsed,
+          {
+            headers: {
+              accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
+              "accept-encoding": "identity",
+              "user-agent": "PersonalNavigationLinkChecker/1.0",
+            },
           },
-        },
-        (incoming) => {
-          if (connectionTimer) clearTimeout(connectionTimer);
-          const statusCode = incoming.statusCode ?? 0;
-          const location = incoming.headers.location;
-          if (statusCode >= 300 && statusCode < 400 && location) {
-            if (redirectsRemaining === 0) {
-              incoming.destroy();
+          (incoming) => {
+            if (connectionTimer) clearTimeout(connectionTimer);
+            const statusCode = incoming.statusCode ?? 0;
+            const location = incoming.headers.location;
+            if (statusCode >= 300 && statusCode < 400 && location) {
+              if (redirectsRemaining === 0) {
+                incoming.destroy();
+                finish({
+                  requestedUrl,
+                  finalUrl: currentUrl,
+                  statusCode,
+                  errorKind: "redirect",
+                  errorMessage: "redirect limit exceeded",
+                });
+                return;
+              }
+              let nextUrl: string;
+              try {
+                nextUrl = new URL(location, parsed).toString();
+              } catch (error) {
+                incoming.destroy();
+                finish(errorProbe(requestedUrl, Object.assign(error as Error, { code: "EREDIRECT" })));
+                return;
+              }
+              const nextProtocol = new URL(nextUrl).protocol;
+              const nextHadInsecureRedirect =
+                hadInsecureRedirect || (parsed.protocol === "https:" && nextProtocol === "http:");
+              // Complete this response before the next hop so redirects share the concurrency limit.
+              incoming.on("error", (error) => finish(errorProbe(requestedUrl, error)));
+              incoming.on("end", () => {
+                if (settled) return;
+                // The next hop enforces the shared deadline itself (extended by its throttle wait).
+                if (totalTimer) clearTimeout(totalTimer);
+                request(nextUrl, redirectsRemaining - 1, nextHadInsecureRedirect).then(
+                  (result) =>
+                    finish({
+                      ...result,
+                      hadInsecureRedirect: nextHadInsecureRedirect || result.hadInsecureRedirect,
+                    }),
+                  (error: unknown) => finish(errorProbe(requestedUrl, error)),
+                );
+              });
+              incoming.resume();
+              return;
+            }
+
+            const bodyChunks: Buffer[] = [];
+            let bodyBytes = 0;
+            const declaredBodyBytes = Number(incoming.headers["content-length"]);
+            const finishBody = (bodyTruncated: boolean) => {
+              const bodySample = Buffer.concat(bodyChunks, bodyBytes).toString("utf8");
               finish({
                 requestedUrl,
                 finalUrl: currentUrl,
                 statusCode,
-                errorKind: "redirect",
-                errorMessage: "redirect limit exceeded",
+                title: extractTitle(bodySample),
+                bodySample,
+                bodyTruncated,
+                hadInsecureRedirect,
               });
-              return;
-            }
-            let nextUrl: string;
-            try {
-              nextUrl = new URL(location, parsed).toString();
-            } catch (error) {
-              incoming.destroy();
-              finish(errorProbe(requestedUrl, Object.assign(error as Error, { code: "EREDIRECT" })));
-              return;
-            }
-            const nextProtocol = new URL(nextUrl).protocol;
-            const nextHadInsecureRedirect =
-              hadInsecureRedirect || (parsed.protocol === "https:" && nextProtocol === "http:");
-            // Complete this response before the next hop so redirects share the concurrency limit.
+            };
+            incoming.on("data", (chunk: Buffer) => {
+              const remainingBytes = resolvedOptions.maxBodyBytes - bodyBytes;
+              if (remainingBytes <= 0) {
+                finishBody(true);
+                incoming.destroy();
+                return;
+              }
+              const retained = chunk.subarray(0, remainingBytes);
+              bodyChunks.push(retained);
+              bodyBytes += retained.byteLength;
+              if (
+                chunk.byteLength > remainingBytes ||
+                (bodyBytes >= resolvedOptions.maxBodyBytes &&
+                  Number.isFinite(declaredBodyBytes) &&
+                  declaredBodyBytes > resolvedOptions.maxBodyBytes)
+              ) {
+                finishBody(true);
+                incoming.destroy();
+              }
+            });
+            incoming.on("end", () => finishBody(false));
             incoming.on("error", (error) => finish(errorProbe(requestedUrl, error)));
-            incoming.on("end", () => {
-              if (settled) return;
-              void request(nextUrl, redirectsRemaining - 1, nextHadInsecureRedirect).then((result) =>
-                finish({
-                  ...result,
-                  hadInsecureRedirect: nextHadInsecureRedirect || result.hadInsecureRedirect,
-                }),
-              );
-            });
-            incoming.resume();
-            return;
-          }
-
-          const bodyChunks: Buffer[] = [];
-          let bodyBytes = 0;
-          const declaredBodyBytes = Number(incoming.headers["content-length"]);
-          const finishBody = (bodyTruncated: boolean) => {
-            const bodySample = Buffer.concat(bodyChunks, bodyBytes).toString("utf8");
-            finish({
-              requestedUrl,
-              finalUrl: currentUrl,
-              statusCode,
-              title: extractTitle(bodySample),
-              bodySample,
-              bodyTruncated,
-              hadInsecureRedirect,
-            });
-          };
-          incoming.on("data", (chunk: Buffer) => {
-            const remainingBytes = resolvedOptions.maxBodyBytes - bodyBytes;
-            if (remainingBytes <= 0) {
-              finishBody(true);
-              incoming.destroy();
-              return;
-            }
-            const retained = chunk.subarray(0, remainingBytes);
-            bodyChunks.push(retained);
-            bodyBytes += retained.byteLength;
-            if (
-              chunk.byteLength > remainingBytes ||
-              (bodyBytes >= resolvedOptions.maxBodyBytes &&
-                Number.isFinite(declaredBodyBytes) &&
-                declaredBodyBytes > resolvedOptions.maxBodyBytes)
-            ) {
-              finishBody(true);
-              incoming.destroy();
-            }
-          });
-          incoming.on("end", () => finishBody(false));
-          incoming.on("error", (error) => finish(errorProbe(requestedUrl, error)));
-        },
-      );
+          },
+        );
+      } catch (error) {
+        // http.get throws synchronously for some invalid targets (e.g. ERR_UNESCAPED_CHARACTERS).
+        finish(errorProbe(requestedUrl, error));
+        return;
+      }
+      totalTimer = setTimeout(() => {
+        clientRequest.destroy(Object.assign(new Error("total request timeout"), { code: "ETOTALTIMEOUT" }));
+      }, remainingMs);
 
       clientRequest.on("socket", (socket) => {
         if (!socket.connecting) return;
@@ -327,7 +342,9 @@ export function classifyProbe(
     return { ...base, status: "parked", reason: "页面标题显示域名停放或出售" };
   }
   if (
-    /\b(?:404|page not found|site not found|website not found)\b/i.test(title) ||
+    // "404" must read as an error ("404 - Not Found", "Error 404"), not a name like "404 Media".
+    /(?:^|\b(?:error|http)\s*)404(?:\s*$|\s*[-–—|:·.,!]|\s+(?:not found|error)\b)|[-–—|:·]\s*404\s*$/i.test(title) ||
+    /\b(?:page|site|website) not found\b/i.test(title) ||
     /^(?:404\b|(?:sorry[,!]?\s+)?(?:page|site|website) not found\b)/i.test(heading)
   ) {
     return { ...base, status: "soft_404", reason: "HTTP 200 页面标题或主标题显示内容不存在" };
@@ -346,7 +363,7 @@ export function classifyProbe(
   }
   if (
     /<meta[^>]+http-equiv=["']?refresh/i.test(body) ||
-    /(?:window\.)?location(?:\.href)?\s*=|document\.location\s*=/i.test(body)
+    isScriptRedirect(body)
   ) {
     return { ...base, status: "review", reason: "页面使用 HTML 或 JavaScript 跳转，需人工复核" };
   }
@@ -365,6 +382,14 @@ export function classifyProbe(
   }
 
   return { ...base, status: "reachable", reason: "页面可读取，仍需人工核对内容" };
+}
+
+// Only inline scripts count, and only assignments: comparisons (`location == x`) and
+// event-handler attributes (`onclick="location.href=…"`) do not navigate on load.
+function isScriptRedirect(body: string): boolean {
+  return [...body.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].some((match) =>
+    /\blocation(?:\.href)?\s*=(?!=)/.test(match[1] ?? ""),
+  );
 }
 
 function shouldRetry(result: Omit<LinkCheckResult, "attempts">): boolean {
